@@ -59,9 +59,6 @@ fun VaultScreen(navHostController: NavHostController) {
     var expandedOther by remember { mutableStateOf(false) }
 
     Scaffold(
-        bottomBar = {
-            TFTBottomNavigationBar(navHostController,currentDestination)
-        },
         containerColor = VaultBackground
     ) { padding ->
 

@@ -120,7 +120,7 @@ fun EmailLoginScreen(navHostController: NavHostController) {
         ) {
             Spacer(modifier = Modifier.height(24.dp))
 
-            // --- Top Navigation ---
+            // Top Navigation
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
@@ -306,8 +306,7 @@ fun EmailLoginScreen(navHostController: NavHostController) {
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // --- Error Manifestation ---
-            // Because this is inside a ColumnScope, AnimatedVisibility works perfectly here.
+            //Error Manifestation
             AnimatedVisibility(
                 visible = showError,
                 enter = expandVertically() + fadeIn(animationSpec = tween(300)),
@@ -343,7 +342,7 @@ fun EmailLoginScreen(navHostController: NavHostController) {
             // Spacer to push button to the bottom area smoothly
             Spacer(modifier = Modifier.weight(1f, fill = false))
 
-            // --- Crossfade Gradient Button ---
+            //Crossfade Gradient Button
             val buttonBrush = Brush.horizontalGradient(
                 colors = listOf(
                     colorResource(id = R.color.gradient_start),

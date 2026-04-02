@@ -12,6 +12,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
+import androidx.compose.material3.OutlinedTextFieldDefaults.contentPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -31,8 +32,8 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.thefinaltransfer.presentation.bottomnavigation.TFTBottomNavigationBar
+import com.example.thefinaltransfer.presentation.navigation.Routes
 
-// --- Centralized Theme Colors based on your provided Hex Codes ---
 object HomeColors {
     val BgCream = Color(0xFFFFFDF9)
     val TextBlack = Color(0xFF1A1A1A)
@@ -64,15 +65,10 @@ object HomeColors {
 @Composable
 fun HomeScreen(navHostController: NavHostController) {
     val navBackStackEntry by navHostController.currentBackStackEntryAsState()
-
-    // 2. Extract the destination from the entry
     val currentDestination = navBackStackEntry?.destination
-    // Scaffold acts as the root container, ready to accept your BottomNavigationBar
+
     Scaffold(
-        containerColor = HomeColors.BgCream,
-        bottomBar = {
-            TFTBottomNavigationBar(navHostController,currentDestination)
-        }
+        containerColor = HomeColors.BgCream
     ) { innerPadding ->
 
         // Main Scrollable Content
@@ -126,7 +122,7 @@ fun HomeScreen(navHostController: NavHostController) {
                     )
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    CheckInCard()
+                    CheckInCard(navHostController)
                 }
             }
 
@@ -143,14 +139,24 @@ fun HomeScreen(navHostController: NavHostController) {
                         QuickActionCard(
                             title = "Create Emergency\nPacket",
                             icon = Icons.Outlined.AddBox,
-                            gradient = Brush.linearGradient(listOf(HomeColors.ActionRedStart, HomeColors.ActionRedEnd)),
+                            gradient = Brush.linearGradient(
+                                listOf(
+                                    HomeColors.ActionRedStart,
+                                    HomeColors.ActionRedEnd
+                                )
+                            ),
                             modifier = Modifier.weight(1f)
                         )
 
                         QuickActionCard(
                             title = "Manage Trusted\nusers",
                             icon = Icons.Outlined.ManageAccounts,
-                            gradient = Brush.linearGradient(listOf(HomeColors.ActionOrangeStart, HomeColors.ActionOrangeEnd)),
+                            gradient = Brush.linearGradient(
+                                listOf(
+                                    HomeColors.ActionOrangeStart,
+                                    HomeColors.ActionOrangeEnd
+                                )
+                            ),
                             modifier = Modifier.weight(1f)
                         )
                     }
@@ -217,9 +223,13 @@ private fun HeaderSection() {
 }
 
 @Composable
-private fun SectionTitle(title: String, icon: ImageVector? = null, iconTint: Color = HomeColors.TextBlack) {
+private fun SectionTitle(
+    title: String,
+    icon: ImageVector? = null,
+    iconTint: Color = HomeColors.TextBlack
+) {
     Row(verticalAlignment = Alignment.CenterVertically) {
-        if (icon!= null) {
+        if (icon != null) {
             Icon(
                 imageVector = icon,
                 contentDescription = null,
@@ -341,14 +351,24 @@ private fun OverviewCard(
                     .background(iconBg, RoundedCornerShape(14.dp)),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(imageVector = icon, contentDescription = null, tint = iconTint, modifier = Modifier.size(26.dp))
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = iconTint,
+                    modifier = Modifier.size(26.dp)
+                )
             }
 
             Spacer(modifier = Modifier.width(16.dp))
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(text = title, fontSize = 13.sp, color = HomeColors.TextGray)
-                Text(text = count, fontSize = 24.sp, fontWeight = FontWeight.ExtraBold, color = HomeColors.TextBlack)
+                Text(
+                    text = count,
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = HomeColors.TextBlack
+                )
             }
 
             Icon(
@@ -361,7 +381,7 @@ private fun OverviewCard(
 }
 
 @Composable
-private fun CheckInCard() {
+private fun CheckInCard(navHostController: NavHostController) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -381,12 +401,22 @@ private fun CheckInCard() {
                         .background(HomeColors.IconBgNextCheckIn, RoundedCornerShape(14.dp)),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(Icons.Outlined.Schedule, null, tint = Color(0xFFFFFFFF), modifier = Modifier.size(26.dp))
+                    Icon(
+                        Icons.Outlined.Schedule,
+                        null,
+                        tint = Color(0xFFFFFFFF),
+                        modifier = Modifier.size(26.dp)
+                    )
                 }
                 Spacer(modifier = Modifier.width(16.dp))
                 Column(modifier = Modifier.weight(1f)) {
                     Text(text = "Next Check-in", fontSize = 13.sp, color = HomeColors.TextGray)
-                    Text(text = "2 days left", fontSize = 24.sp, fontWeight = FontWeight.ExtraBold, color = HomeColors.TextBlack)
+                    Text(
+                        text = "2 days left",
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = HomeColors.TextBlack
+                    )
                 }
                 Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, null, tint = Color.LightGray)
             }
@@ -400,7 +430,7 @@ private fun CheckInCard() {
             ) {
                 // Edit Button
                 OutlinedButton(
-                    onClick = { /* Edit Action */ },
+                    onClick = { navHostController.navigate(Routes.EditCheckInHome) },
                     modifier = Modifier
                         .weight(1f)
                         .height(44.dp),
@@ -408,7 +438,12 @@ private fun CheckInCard() {
                     border = BorderStroke(1.5.dp, Color(0xFFFFB703)),
                     contentPadding = PaddingValues(0.dp)
                 ) {
-                    Text("Edit", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Color(0xFFFFB703))
+                    Text(
+                        "Edit",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFFFFB703)
+                    )
                 }
 
                 // Verify Button
@@ -421,7 +456,12 @@ private fun CheckInCard() {
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFFB703)),
                     contentPadding = PaddingValues(0.dp)
                 ) {
-                    Text("Verify", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                    Text(
+                        "Verify",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
                 }
             }
         }
@@ -460,7 +500,12 @@ private fun QuickActionCard(
                         .border(1.dp, Color.White.copy(alpha = 0.4f), RoundedCornerShape(12.dp)),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(imageVector = icon, contentDescription = null, tint = Color.White, modifier = Modifier.size(24.dp))
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(24.dp)
+                    )
                 }
 
                 Text(

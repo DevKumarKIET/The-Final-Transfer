@@ -1,4 +1,4 @@
-package com.example.thefinaltransfer.presentation.navoptions.uploadscreen.components
+package com.example.thefinaltransfer.presentation.navoptions.uploadscreen.componentsupload
 
 import com.example.thefinaltransfer.presentation.navoptions.uploadscreen.RequiredLabel
 import com.example.thefinaltransfer.presentation.navoptions.uploadscreen.defaultInputColors

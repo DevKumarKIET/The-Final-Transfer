@@ -1,6 +1,5 @@
 package com.example.thefinaltransfer.presentation.navoptions.profilescreen
 
-
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -14,7 +13,7 @@ import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.rounded.Logout
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -22,235 +21,201 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 
-// --- Theme Colors for Profile Screen ---
-object ProfileColors {
-    val PastelTop = Color(0xFFFFF7ED)
-    val PastelMid = Color(0xFFFFFBEB)
-    val PastelBot = Color(0xFFFFEDD4)
-    val GradientStart = Color(0xFFFF9F45)
-    val GradientEnd = Color(0xFFFFB703)
-    val BrandOrange = Color(0xFFE26A2C)
+// --- Centralized Theme Colors ---
+private object ProfileColors {
+    val BgCream = Color(0xFFFFF6EE)
     val TextBlack = Color(0xFF1A1A1A)
     val TextGray = Color(0xFF757575)
-    val CardBg = Color.White
-    val BorderColor = Color(0xFFFFE0B2)
-    val ErrorRedBg = Color(0xFFFFF0F0)
-    val ErrorRedIcon = Color(0xFFD32F2F)
+
+    // Gradients
+    val HeaderGradient = Brush.linearGradient(listOf(Color(0xFFEA580C), Color(0xFFF97316), Color(0xFFFB923C)))
+    val UserCardGradient = Brush.linearGradient(listOf(Color(0xFFFF9F45), Color(0xFFFF7A00)))
+    val AvatarGradient = Brush.linearGradient(listOf(Color(0xFFFF9F45),Color(0xFFFFB703)))
+    val StatusCardGradient = Brush.linearGradient(listOf(Color(0xFFFFB2B2), Color(0xFFFF7F7F)))
+    val IconGradient = Brush.linearGradient(listOf(Color(0xFFFF9F45), Color(0xFFFFB703)))
+
+    val CardBorder = Color(0xFFF5E6D8)
+    val ErrorRed = Color(0xFFD32F2F)
 }
 
 @Composable
-fun ProfileScreen(navHostController: NavHostController) {
-    // Exact background gradient matching the rest of the application
-    val bgBrush = Brush.verticalGradient(
-        colors = listOf(
-            ProfileColors.PastelTop,
-            ProfileColors.PastelMid,
-            ProfileColors.PastelBot
-        )
-    )
+fun ProfileScreen(navHostController: NavHostController?) {
 
+    Scaffold(
+        containerColor = ProfileColors.BgCream,
+    ) { innerPadding ->
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(ProfileColors.BgCream)
+                .padding(innerPadding), // Ensures content doesn't hide under nav bar
+            contentPadding = PaddingValues(bottom = 40.dp)
+        ) {
+            // --- 1. HEADER & USER PROFILE CARD ---
+            item {
+                HeaderAndUserCard()
+            }
+
+            // --- 2. CURRENT STATUS SECTION ---
+            item {
+                Spacer(modifier = Modifier.height(24.dp))
+                CurrentStatusCard()
+            }
+
+            // --- 3. ACCOUNT SETTINGS ---
+            item {
+                Spacer(modifier = Modifier.height(24.dp))
+                SectionTitle("Account Settings")
+                Spacer(modifier = Modifier.height(12.dp))
+
+                SettingsItemCard(
+                    icon = Icons.Outlined.Security,
+                    title = "Security & Privacy",
+                    subtitle = "Password, biometrics, encryption"
+                )
+                SettingsItemCard(
+                    icon = Icons.Outlined.Notifications,
+                    title = "Notifications",
+                    subtitle = "Manage alerts and reminders"
+                )
+                SettingsItemCard(
+                    icon = Icons.Outlined.Settings,
+                    title = "App Preferences",
+                    subtitle = "Language, theme, display"
+                )
+            }
+
+            // --- 4. HELP & SUPPORT ---
+            item {
+                Spacer(modifier = Modifier.height(24.dp))
+                SectionTitle("Help & Support")
+                Spacer(modifier = Modifier.height(12.dp))
+
+                SettingsItemCard(
+                    icon = Icons.Outlined.HelpOutline,
+                    title = "Help Center",
+                    subtitle = "FAQs and guides"
+                )
+                SettingsItemCard(
+                    icon = Icons.Outlined.ErrorOutline,
+                    title = "Contact Support",
+                    subtitle = "Get help from our team"
+                )
+                SettingsItemCard(
+                    icon = Icons.Outlined.Article,
+                    title = "Legal & Policies",
+                    subtitle = "Terms, privacy, compliance"
+                )
+            }
+
+            // --- 5. FOOTER & LOGOUT ---
+            item {
+                Spacer(modifier = Modifier.height(32.dp))
+                AppFooter()
+                Spacer(modifier = Modifier.height(24.dp))
+                LogoutButton(onLogoutClick = { /* Handle Logout */ })
+            }
+        }
+    }
+}
+
+// --- Modual UI Components ---
+
+@Composable
+private fun HeaderAndUserCard() {
     Box(
         modifier = Modifier
-            .fillMaxSize()
-            .background(bgBrush)
+            .fillMaxWidth()
+            .height(260.dp)
     ) {
-        // --- 1. Curved Premium Header ---
+        // Curved Orange Header
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(200.dp)
+                .height(250.dp)
                 .clip(RoundedCornerShape(bottomStart = 40.dp, bottomEnd = 40.dp))
-                .background(Brush.linearGradient(listOf(
-                    Color(0xFFFFD6B0),
-                    Color(0xFFFF9F45)
-                )))
+                .background(ProfileColors.HeaderGradient)
+                .padding(horizontal = 18.dp, vertical = 40.dp)
         ) {
 
-        }
+            Text(
+                text = "Profile",
+                fontSize = 28.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White,
+            )
 
-        // --- 2. Scrollable Content ---
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(bottom = 100.dp) // Leave space for the BottomNavBar
-        ) {
-            // Avatar & Basic Info (Overlapping the header)
-
-            item {
-                Column(
+            // Overlapping User Card
+            Card(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(horizontal = 12.dp)
+                    .fillMaxWidth()
+                    .shadow(12.dp, RoundedCornerShape(20.dp), spotColor = Color(0x33000000)),
+                shape = RoundedCornerShape(20.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 12.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.Transparent)
+            ) {
+                Row(
                     modifier = Modifier
+                        .background(ProfileColors.UserCardGradient)
                         .fillMaxWidth()
-                        .padding(top = 50.dp), // Pushes the avatar down so it sits on the curve
-                    horizontalAlignment = Alignment.CenterHorizontally
+                        .padding(20.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = "Profile",
-                        style = TextStyle(
-                            fontFamily = FontFamily.Serif,
-                            fontSize = 28.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
-                        ),
-                        modifier = Modifier
-                            .padding(top = 30.dp)
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-                    // Profile Image Container
+                    // Avatar Box
                     Box(
                         modifier = Modifier
-                            .size(120.dp)
-                            .shadow(12.dp, CircleShape)
-                            .clip(CircleShape)
-                            .background(Color.White)
-                            .border(4.dp, Color.White, CircleShape),
-                        contentAlignment = Alignment.Center
+                            .size(64.dp)
+                            .shadow(8.dp, RoundedCornerShape(16.dp), spotColor = Color(0x33000000))
+                            .background(ProfileColors.AvatarGradient, RoundedCornerShape(16.dp)),
+                        contentAlignment = Alignment.Center,
+
                     ) {
-                        // Using an Icon, but this could easily be replaced with AsyncImage for a real photo
                         Icon(
                             imageVector = Icons.Outlined.PersonOutline,
-                            contentDescription = "User Avatar",
-                            tint = ProfileColors.GradientStart,
-                            modifier = Modifier.size(60.dp)
+                            contentDescription = "Avatar",
+                            tint = Color.White,
+                            modifier = Modifier.size(32.dp)
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.width(10.dp))
 
-                    Text(
-                        text = "User Name",
-                        style = TextStyle(
-                            fontFamily = FontFamily.Serif,
-                            fontSize = 24.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = ProfileColors.TextBlack
-                        )
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "example@gmail.com",
-                        fontSize = 14.sp,
-                        color = ProfileColors.TextGray
-                    )
-
-                    Spacer(modifier = Modifier.height(20.dp))
-
-                    // Edit Profile Action
-//                    OutlinedButton(
-//                        onClick = { /* Handle Edit */ },
-//                        shape = RoundedCornerShape(50.dp),
-//                        border = BorderStroke(1.5.dp, ProfileColors.BrandOrange),
-//                        colors = ButtonDefaults.outlinedButtonColors(contentColor = ProfileColors.BrandOrange),
-//                        contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp)
-//                    ) {
-//                        Text("Edit Profile", fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
-//                    }
-                }
-            }
-
-            // --- 3. Account Settings Group ---
-            item {
-                Spacer(modifier = Modifier.height(32.dp))
-                SectionHeading(title = "Account Settings")
-
-                ProfileOptionCard(
-                    title = "Personal Details",
-                    subtitle = "Manage your name, email, and phone",
-                    icon = Icons.Outlined.Badge,
-                    onClick = { /* Navigate */ }
-                )
-                ProfileToggleCard(
-                    title = "Biometric Authentication",
-                    subtitle = "Use Face ID or Fingerprint to unlock vault",
-                    icon = Icons.Outlined.Fingerprint,
-                    initialState = true,
-                    onToggle = { /* Handle Biometric switch */ }
-                )
-            }
-
-            // --- 4. Preferences Group ---
-            item {
-                Spacer(modifier = Modifier.height(24.dp))
-                SectionHeading(title = "Preferences")
-
-                ProfileOptionCard(
-                    title = "Notifications",
-                    subtitle = "Configure alert and trigger preferences",
-                    icon = Icons.Outlined.NotificationsNone,
-                    onClick = { /* Navigate */ }
-                )
-                ProfileOptionCard(
-                    title = "Subscription Plan",
-                    subtitle = "Lifetime Vault Access",
-                    icon = Icons.Outlined.WorkspacePremium,
-                    onClick = { /* Navigate */ }
-                )
-            }
-
-            // --- 5. Support & Legal Group ---
-            item {
-                Spacer(modifier = Modifier.height(24.dp))
-                SectionHeading(title = "Support & Legal")
-
-                ProfileOptionCard(
-                    title = "Help & Support",
-                    subtitle = "Read FAQs or contact our team",
-                    icon = Icons.Outlined.SupportAgent,
-                    onClick = { /* Navigate */ }
-                )
-                ProfileOptionCard(
-                    title = "Privacy Policy",
-                    subtitle = "How we protect your zero-knowledge data",
-                    icon = Icons.Outlined.PrivacyTip,
-                    onClick = { /* Navigate */ }
-                )
-            }
-
-            // --- 6. Log Out Button ---
-            item {
-                Spacer(modifier = Modifier.height(32.dp))
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 24.dp)
-                        .shadow(2.dp, RoundedCornerShape(16.dp))
-                        .clickable {  },
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = ProfileColors.ErrorRedBg)
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(44.dp)
-                                .background(Color(0xFFFFCDD2), RoundedCornerShape(12.dp)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Rounded.Logout,
-                                contentDescription = "Logout",
-                                tint = ProfileColors.ErrorRedIcon
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.width(16.dp))
-
+                    // User Info
+                    Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "Log Out",
-                            fontSize = 16.sp,
+                            text = "Justice",
+                            fontSize = 22.sp,
                             fontWeight = FontWeight.Bold,
-                            color = ProfileColors.ErrorRedIcon
+                            color = Color.White
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = "justice@email.com",
+                            fontSize = 14.sp,
+                            color = Color.White.copy(alpha = 0.85f)
+                        )
+                    }
+
+                    // Edit Button
+                    Box(
+                        modifier = Modifier
+                            .size(42.dp)
+                            .background(Color.White.copy(alpha = 0.2f), CircleShape)
+                            .clickable { /* Edit Profile */ },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Edit,
+                            contentDescription = "Edit Profile",
+                            tint = Color.White,
+                            modifier = Modifier.size(18.dp)
                         )
                     }
                 }
@@ -259,38 +224,143 @@ fun ProfileScreen(navHostController: NavHostController) {
     }
 }
 
-// --- Reusable UI Components ---
+@Composable
+private fun CurrentStatusCard() {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 18.dp)
+            .shadow(6.dp, RoundedCornerShape(20.dp), spotColor = Color(0x1A000000)),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.Transparent)
+    ) {
+        Column(
+            modifier = Modifier
+                .background(ProfileColors.StatusCardGradient)
+                .fillMaxWidth()
+                .padding(20.dp)
+        ) {
+            // Header
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Outlined.Shield,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Current Status",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Box 1: Check-in Status (White bg with 40% Opacity)
+            StatusIndicatorBox(
+                icon = Icons.Outlined.CheckCircle,
+                title = "Check-in Status",
+                subtitle = "Last verified 2 days ago",
+                badgeText = "Active"
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Box 2: Packet Security (White bg with 40% Opacity)
+            StatusIndicatorBox(
+                icon = Icons.Outlined.Lock,
+                title = "Packet Security",
+                subtitle = "All packets encrypted",
+                badgeText = "Secured"
+            )
+        }
+    }
+}
 
 @Composable
-fun SectionHeading(title: String) {
+private fun StatusIndicatorBox(
+    icon: ImageVector,
+    title: String,
+    subtitle: String,
+    badgeText: String
+) {
+    // 40% opacity white background requested in prompt
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color.White.copy(alpha = 0.4f), RoundedCornerShape(16.dp))
+            .padding(12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .size(40.dp)
+                .border(1.dp, Color.White, RoundedCornerShape(10.dp))
+                .background(ProfileColors.IconGradient, RoundedCornerShape(10.dp)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = Color.White,
+                modifier = Modifier.size(20.dp)
+            )
+        }
+
+        Spacer(modifier = Modifier.width(12.dp))
+
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Medium,
+                color = ProfileColors.TextBlack
+            )
+            Text(text = subtitle, fontSize = 12.sp, color = ProfileColors.TextGray)
+        }
+
+        // White Pill Badge
+        Box(
+            modifier = Modifier
+                .background(Color.White, RoundedCornerShape(50))
+                .padding(horizontal = 12.dp, vertical = 6.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = badgeText,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
+                color = ProfileColors.TextBlack
+            )
+        }
+    }
+}
+
+@Composable
+private fun SectionTitle(title: String) {
     Text(
         text = title,
-        style = TextStyle(
-            fontSize = 15.sp,
-            fontWeight = FontWeight.Bold,
-            color = ProfileColors.TextBlack,
-            letterSpacing = 0.5.sp
-        ),
-        modifier = Modifier.padding(start = 24.dp, bottom = 12.dp)
+        fontSize = 16.sp,
+        fontWeight = FontWeight.Bold,
+        color = ProfileColors.TextBlack,
+        modifier = Modifier.padding(horizontal = 24.dp)
     )
 }
 
 @Composable
-fun ProfileOptionCard(
-    title: String,
-    subtitle: String,
-    icon: ImageVector,
-    onClick: () -> Unit
-) {
+private fun SettingsItemCard(icon: ImageVector, title: String, subtitle: String) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 24.dp, vertical = 6.dp)
-            .border(1.dp, ProfileColors.BorderColor, RoundedCornerShape(16.dp))
-            .clickable { onClick() },
+            .clickable { /* Navigate */ },
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = ProfileColors.CardBg),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        border = BorderStroke(1.dp, ProfileColors.CardBorder),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Row(
             modifier = Modifier
@@ -298,95 +368,102 @@ fun ProfileOptionCard(
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Gradient Icon Box
             Box(
                 modifier = Modifier
-                    .size(44.dp)
-                    .background(
-                        brush = Brush.linearGradient(listOf(ProfileColors.GradientStart, ProfileColors.GradientEnd)),
-                        shape = RoundedCornerShape(12.dp)
-                    ),
+                    .size(40.dp)
+                    .background(Color(0xFFFFF0E0), RoundedCornerShape(10.dp)),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(imageVector = icon, contentDescription = title, tint = Color.White, modifier = Modifier.size(22.dp))
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = Color(0xFFFF9F45),
+                    modifier = Modifier.size(20.dp)
+                )
             }
 
             Spacer(modifier = Modifier.width(16.dp))
 
             Column(modifier = Modifier.weight(1f)) {
-                Text(text = title, fontSize = 15.sp, fontWeight = FontWeight.Bold, color = ProfileColors.TextBlack)
+                Text(
+                    text = title,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = ProfileColors.TextBlack
+                )
                 Spacer(modifier = Modifier.height(2.dp))
-                Text(text = subtitle, fontSize = 13.sp, color = ProfileColors.TextGray)
+                Text(text = subtitle, fontSize = 12.sp, color = ProfileColors.TextGray)
             }
 
             Icon(
                 imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowRight,
-                contentDescription = "Navigate",
-                tint = Color.LightGray
+                contentDescription = null,
+                tint = Color(0xFFFFD6B0)
             )
         }
     }
 }
 
 @Composable
-fun ProfileToggleCard(
-    title: String,
-    subtitle: String,
-    icon: ImageVector,
-    initialState: Boolean,
-    onToggle: (Boolean) -> Unit
-) {
-    var isChecked by remember { mutableStateOf(initialState) }
-
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 24.dp, vertical = 6.dp)
-            .border(1.dp, ProfileColors.BorderColor, RoundedCornerShape(16.dp)),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = ProfileColors.CardBg),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+private fun AppFooter() {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Row(
+        Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .fillMaxWidth(0.8f)
+                .background(Color.White, RoundedCornerShape(12.dp))
+                .border(1.dp, ProfileColors.CardBorder, RoundedCornerShape(12.dp))
+                .padding(vertical = 16.dp),
+            contentAlignment = Alignment.Center
         ) {
-            // Gradient Icon Box
-            Box(
-                modifier = Modifier
-                    .size(44.dp)
-                    .background(
-                        brush = Brush.linearGradient(listOf(ProfileColors.GradientStart, ProfileColors.GradientEnd)),
-                        shape = RoundedCornerShape(12.dp)
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(imageVector = icon, contentDescription = title, tint = Color.White, modifier = Modifier.size(22.dp))
-            }
-
-            Spacer(modifier = Modifier.width(16.dp))
-
-            Column(modifier = Modifier.weight(1f)) {
-                Text(text = title, fontSize = 15.sp, fontWeight = FontWeight.Bold, color = ProfileColors.TextBlack)
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(text = subtitle, fontSize = 13.sp, color = ProfileColors.TextGray)
-            }
-
-            Switch(
-                checked = isChecked,
-                onCheckedChange = {
-                    isChecked = it
-                    onToggle(it)
-                },
-                colors = SwitchDefaults.colors(
-                    checkedThumbColor = Color.White,
-                    checkedTrackColor = ProfileColors.BrandOrange,
-                    uncheckedThumbColor = ProfileColors.TextGray,
-                    uncheckedTrackColor = Color(0xFFE0E0E0)
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    text = "The Final Transfer v1.0.0",
+                    fontSize = 12.sp,
+                    color = ProfileColors.TextGray
                 )
-            )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "© 2026 All rights reserved",
+                    fontSize = 12.sp,
+                    color = ProfileColors.TextGray
+                )
+            }
         }
     }
 }
+
+@Composable
+private fun LogoutButton(onLogoutClick: () -> Unit) {
+    Box(modifier = Modifier.padding(horizontal = 24.dp)) {
+        OutlinedButton(
+            onClick = onLogoutClick,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp),
+            shape = RoundedCornerShape(16.dp),
+            border = BorderStroke(1.dp, Color(0xFFFFCDCD)),
+            colors = ButtonDefaults.outlinedButtonColors(containerColor = Color.White)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Rounded.Logout,
+                    contentDescription = "Logout",
+                    tint = ProfileColors.ErrorRed,
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+                Text(
+                    text = "Logout",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = ProfileColors.ErrorRed
+                )
+            }
+        }
+    }
+}
+
+

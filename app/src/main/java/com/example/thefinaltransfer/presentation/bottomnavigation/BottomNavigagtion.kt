@@ -1,169 +1,268 @@
 package com.example.thefinaltransfer.presentation.bottomnavigation
 
-import android.net.http.SslCertificate.restoreState
-import android.net.http.SslCertificate.saveState
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
+import com.example.thefinaltransfer.presentation.navigation.Routes
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.FileOpen
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.outlined.AccountCircle
-import androidx.compose.material.icons.outlined.FileOpen
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.Lock
+import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.Upload
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.colorResource
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import androidx.navigation.NavDestination
-import androidx.navigation.NavDestination.Companion.hierarchy
+import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavGraph.Companion.findStartDestination
-import androidx.navigation.NavHostController
-import com.example.thefinaltransfer.R
-import com.example.thefinaltransfer.presentation.navigation.Routes
 
-// Data class mapping routing logic to complex UI representation parameters
 data class BottomNavItem(
-    val title: String,
-    val route: Any, // Expects a Type-safe serialization object
-    val iconRes: Int? = null, // For the custom icons
-    val iconVector: ImageVector? = null, // Standard Material icons k liye
-    val isCenterButton: Boolean = false
+    val label: String,
+    val icon: ImageVector,
+    val route: Routes,
+    val isCenter: Boolean = false
 )
+
+
+val bottomNavItems = listOf(
+    BottomNavItem(
+        label = "Home",
+        icon = Icons.Outlined.Home,
+        route = Routes.HomeScreen
+    ),
+    BottomNavItem(
+        label = "Vault",
+        icon = Icons.Outlined.Lock,
+        route = Routes.VaultScreen
+    ),
+    BottomNavItem(
+        label = "Upload",
+        icon = Icons.Outlined.Upload,
+        route = Routes.UploadScreen,
+        isCenter = true
+    ),
+    BottomNavItem(
+        label = "About",
+        icon = Icons.Outlined.Info,
+        route = Routes.AboutScreen
+    ),
+    BottomNavItem(
+        label = "Profile",
+        icon = Icons.Outlined.Person,
+        route = Routes.ProfileScreen
+    )
+)
+
 
 @Composable
 fun TFTBottomNavigationBar(
-    navHostController: NavHostController,
+    navController: NavController,
     currentDestination: NavDestination?
 ) {
-    val uploadGradient = Brush.verticalGradient(
-        colors = listOf(
-            colorResource(id = R.color.gradient_start),
-            colorResource(id = R.color.gradient_end)
-        )
-    )
+    val primaryOrange = Color(0xFFF5A623)
 
-    val navItems = listOf(
-        BottomNavItem("Home", Routes.HomeScreen, iconVector = Icons.Outlined.Home),
-        BottomNavItem("Vault", Routes.VaultScreen, iconVector = Icons.Outlined.FileOpen),
-        BottomNavItem("Upload", Routes.UploadScreen, iconVector = Icons.Outlined.Upload, isCenterButton = true),
-        BottomNavItem("About", Routes.AboutScreen, iconVector = Icons.Outlined.Info),
-        BottomNavItem("Profile", Routes.ProfileScreen, iconVector = Icons.Outlined.AccountCircle)
-    )
-
-    NavigationBar(
-        modifier = Modifier.shadow(elevation = 16.dp, ambientColor = Color.Black, spotColor = Color.Black),
-        containerColor = colorResource(id = R.color.navbackground),
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .shadow(
+                elevation = 16.dp,
+                shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
+                ambientColor = Color.Black.copy(alpha = 0.3f),
+                spotColor = Color.Black.copy(alpha = 0.3f)
+            ),
+        shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
+        color = MaterialTheme.colorScheme.surface,
         tonalElevation = 0.dp
     ) {
-        navItems.forEach { item ->
-            val isSelected = currentDestination?.hierarchy?.any {
-                it.route?.contains(item.route::class.qualifiedName?: "") == true
-            } == true
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp, vertical = 10.dp),
+            horizontalArrangement = Arrangement.SpaceAround,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            bottomNavItems.forEach { item ->
+                val isSelected = currentDestination?.hasRoute(item.route::class) == true
 
-            // Micro-interaction scaling animation for the icon utilizing fluid spring kinematics
-            val iconScale by animateFloatAsState(
-                targetValue = if (isSelected) 1.25f else 1.0f,
-                animationSpec = spring(
-                    dampingRatio = Spring.DampingRatioMediumBouncy,
-                    stiffness = Spring.StiffnessLow
-                ),
-                label = "icon_scale_animation"
+                if (item.isCenter) {
+                    CenterNavItem(
+                        item = item,
+                        isSelected = isSelected,
+                        primaryColor = primaryOrange,
+                        onClick = {
+                            navigateToBottomNavDestination(navController, item.route)
+                        }
+                    )
+                } else {
+                    RegularNavItem(
+                        item = item,
+                        isSelected = isSelected,
+                        primaryColor = primaryOrange,
+                        onClick = {
+                            navigateToBottomNavDestination(navController, item.route)
+                        }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun RegularNavItem(
+    item: BottomNavItem,
+    isSelected: Boolean,
+    primaryColor: Color,
+    onClick: () -> Unit
+) {
+    val iconColor by animateColorAsState(
+        targetValue = if (isSelected) primaryColor else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+        animationSpec = tween(durationMillis = 250),
+        label = "iconColor_${item.label}"
+    )
+
+    val labelColor by animateColorAsState(
+        targetValue = if (isSelected) primaryColor else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+        animationSpec = tween(durationMillis = 250),
+        label = "labelColor_${item.label}"
+    )
+
+    Column(
+        modifier = Modifier
+            .clip(RoundedCornerShape(12.dp))
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = onClick
             )
+            .padding(horizontal = 16.dp, vertical = 4.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Icon(
+            imageVector = item.icon,
+            contentDescription = item.label,
+            tint = iconColor,
+            modifier = Modifier.size(24.dp)
+        )
 
-            NavigationBarItem(
-                selected = isSelected,
-                onClick = {
-                    if (!isSelected) {
-                        navHostController.navigate(item.route) {
-                            popUpTo(navHostController.graph.findStartDestination().id) {
-                                saveState = true
-                            }
-                            launchSingleTop = true
-                            restoreState = true
-                        }
-                    }
-                },
-                icon = {
-                    if (item.isCenterButton) {
-                        Box(
-                            modifier = Modifier
-                                .size(48.dp)
-                                .offset(y = (-4).dp)
-                                .shadow(2.dp, CircleShape)
-                                .clip(CircleShape)
-                                .background(uploadGradient)
-                                .scale(iconScale),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            item.iconRes?.let { res ->
-                                Icon(
-                                    imageVector = ImageVector.vectorResource(id = res),
-                                    contentDescription = item.title,
-                                    tint = Color.White,
-                                    modifier = Modifier.size(28.dp)
-                                )
-                            }
-                        }
-                    } else {
-                        val iconModifier = Modifier
-                            .size(22.dp)
-                            .scale(iconScale)
+        Spacer(modifier = Modifier.height(3.dp))
 
-                        if (item.iconRes!= null) {
-                            Icon(
-                                painter = painterResource(id = item.iconRes),
-                                contentDescription = item.title,
-                                modifier = iconModifier
-                            )
-                        } else if (item.iconVector!= null) {
-                            Icon(
-                                imageVector = item.iconVector,
-                                contentDescription = item.title,
-                                modifier = iconModifier
-                            )
-                        }
-                    }
-                },
-                label = {
-                    if (!item.isCenterButton) {
-                        Text(
-                            text = item.title,
-                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                            modifier = Modifier.offset(y = 2.dp)
-                        )
-                    }
-                },
-                colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = colorResource(id = R.color.brand_orange),
-                    selectedTextColor = colorResource(id = R.color.brand_orange),
-                    unselectedIconColor = colorResource(id = R.color.black),
-                    unselectedTextColor = colorResource(id = R.color.black),
-                    indicatorColor = Color.Transparent
-                ),
-                interactionSource = remember { MutableInteractionSource() }
+        Text(
+            text = item.label,
+            color = labelColor,
+            fontSize = 11.sp,
+            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+            maxLines = 1
+        )
+    }
+}
+
+@Composable
+private fun CenterNavItem(
+    item: BottomNavItem,
+    isSelected: Boolean,
+    primaryColor: Color,
+    onClick: () -> Unit
+) {
+    val containerSize: Dp by animateDpAsState(
+        targetValue = if (isSelected) 60.dp else 56.dp,
+        animationSpec = tween(durationMillis = 250),
+        label = "centerSize"
+    )
+
+    val containerColor by animateColorAsState(
+        targetValue = primaryColor,
+        animationSpec = tween(durationMillis = 250),
+        label = "centerColor"
+    )
+
+    Column(
+        modifier = Modifier
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = onClick
+            )
+            .padding(horizontal = 8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Box(
+            modifier = Modifier
+                .size(containerSize)
+                .shadow(
+                    elevation = if (isSelected) 12.dp else 6.dp,
+                    shape = CircleShape,
+                    ambientColor = primaryColor.copy(alpha = 0.4f),
+                    spotColor = primaryColor.copy(alpha = 0.4f)
+                )
+                .clip(CircleShape)
+                .background(containerColor),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = item.icon,
+                contentDescription = item.label,
+                tint = Color.White,
+                modifier = Modifier.size(26.dp)
             )
         }
+
+        Spacer(modifier = Modifier.height(3.dp))
+
+        Text(
+            text = item.label,
+            color = primaryColor,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.SemiBold,
+            maxLines = 1
+        )
+    }
+}
+
+private fun navigateToBottomNavDestination(
+    navController: NavController,
+    route: Routes
+) {
+    navController.navigate(route) {
+        // Pop up to the start destination to avoid stacking screens
+        popUpTo(navController.graph.findStartDestination().id) {
+            saveState = true
+        }
+        // Avoid duplicate copies of the same destination
+        launchSingleTop = true
+        // Restore state when navigating back to a previously selected tab
+        restoreState = true
     }
 }
