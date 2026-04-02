@@ -6,6 +6,7 @@ plugins {
 //    alias(libs.plugins.ksp)
 //    alias(libs.plugins.kotlin.serialization)
     kotlin("plugin.serialization") version "2.3.10"
+    alias(libs.plugins.google.gms.google.services)
 }
 
 android {
@@ -64,6 +65,8 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.androidx.ui)
     implementation(libs.androidx.benchmark.traceprocessor)
+    implementation(libs.firebase.auth)
+    implementation(libs.firebase.database)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

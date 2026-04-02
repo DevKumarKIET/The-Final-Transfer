@@ -1,5 +1,6 @@
 package com.example.thefinaltransfer.presentation.logins.mobilelogin
 
+import android.app.Activity
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -27,6 +28,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
@@ -45,12 +47,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.thefinaltransfer.R
+import com.example.thefinaltransfer.presentation.auth.AuthViewModel
 import com.example.thefinaltransfer.presentation.navigation.Routes
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import com.example.thefinaltransfer.presentation.logins.loginotpscreen.LoginOtpScreen
+
 
 @Composable
-fun MobileLoginScreen(navHostController: NavHostController) {
+fun MobileLoginScreen(
+    navHostController: NavHostController,
+    authViewModel: AuthViewModel
+) {
     // Unidirectional State Hoisting Matrix ensuring a single source of truth
     var primaryIdentifier by remember { mutableStateOf("") }
     var securePassword by remember { mutableStateOf("") }
@@ -61,6 +67,29 @@ fun MobileLoginScreen(navHostController: NavHostController) {
     val coroutineScope = rememberCoroutineScope()
     val focusManager = LocalFocusManager.current
     val interactionSource = remember { MutableInteractionSource() }
+
+    // Add after existing state declarations
+    val authState by authViewModel.uiState.collectAsState()
+    val context = LocalContext.current
+    val activity = context as Activity
+
+// Observe navigation triggers
+    LaunchedEffect(authState.navigateToOtp) {
+        if (authState.navigateToOtp) {
+            authViewModel.clearNavigationFlags()
+            navHostController.navigate(
+                Routes.LoginOTPScreen(
+                    identifier = primaryIdentifier,
+                    method = "phone"
+                )
+            )
+        }
+    }
+
+    LaunchedEffect(authState.isLoading) {
+        isProcessing = authState.isLoading
+    }
+
 
     // Memory-optimized Skia Render Brushes allocated once per composition
     val backgroundBrush = remember {
@@ -310,15 +339,7 @@ fun MobileLoginScreen(navHostController: NavHostController) {
                 onClick = {
                     if (isFormValid) {
                         focusManager.clearFocus()
-
-                        coroutineScope.launch {
-                            isProcessing = true
-                            delay(600)
-                            delay(800)
-                            delay(400)
-                            isProcessing = false
-                            navHostController.navigate(Routes.LoginOTPScreen)
-                        }
+                        authViewModel.loginWithPhone(primaryIdentifier, securePassword, activity)
                     }
                 },
                 modifier = Modifier

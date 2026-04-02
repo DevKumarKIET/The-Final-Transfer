@@ -9,11 +9,14 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
+import com.example.thefinaltransfer.presentation.auth.AuthViewModel
 import com.example.thefinaltransfer.presentation.biometricauthentication.BiometricSetupScreen
 import com.example.thefinaltransfer.presentation.bottomnavigation.TFTBottomNavigationBar
 import com.example.thefinaltransfer.presentation.logins.loginscreen.LoginMethodScreen
@@ -48,6 +51,9 @@ fun TFTNavigationSystem() {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
 
+    // Shared ViewModel for all auth screens — single source of truth
+    val authViewModel: AuthViewModel = viewModel()
+
     // Show bottom nav only on main app screens
     val showBottomNav = bottomNavRoutes.any { route ->
         currentDestination?.hasRoute(route::class) == true
@@ -63,9 +69,8 @@ fun TFTNavigationSystem() {
             }
         }
     ) { innerPadding ->
-
         NavHost(
-            startDestination = Routes.HomeScreen,
+            startDestination = Routes.SplashScreen,
             navController = navController,
             modifier = Modifier.padding(innerPadding),
             enterTransition = {
@@ -105,22 +110,24 @@ fun TFTNavigationSystem() {
                 LoginMethodScreen(navController)
             }
             composable<Routes.EmailLoginScreen> {
-                EmailLoginScreen(navController)
+                EmailLoginScreen(navController, authViewModel)
             }
             composable<Routes.MobileLoginScreen> {
-                MobileLoginScreen(navController)
+                MobileLoginScreen(navController, authViewModel)
             }
-            composable<Routes.LoginOTPScreen> {
-                LoginOtpScreen(navController)
+            composable<Routes.LoginOTPScreen> { backStackEntry ->
+                val args = backStackEntry.toRoute<Routes.LoginOTPScreen>()
+                LoginOtpScreen(navController, authViewModel, args.identifier, args.method)
             }
             composable<Routes.SignUpScreen> {
-                RegisterPersonalDetailsScreen(navController)
+                RegisterPersonalDetailsScreen(navController, authViewModel)
             }
-            composable<Routes.SignUpOTPScreen> {
-                RegisterOtpScreen(navController)
+            composable<Routes.SignUpOTPScreen> { backStackEntry ->
+                val args = backStackEntry.toRoute<Routes.SignUpOTPScreen>()
+                RegisterOtpScreen(navController, authViewModel)
             }
             composable<Routes.CreatePasswordScreen> {
-                CreatePasswordScreen(navController)
+                CreatePasswordScreen(navController, authViewModel)
             }
             composable<Routes.BiometricAuthenticationScreen> {
                 BiometricSetupScreen(navController)

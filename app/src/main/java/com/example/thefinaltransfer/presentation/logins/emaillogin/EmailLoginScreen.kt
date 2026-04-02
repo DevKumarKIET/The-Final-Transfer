@@ -60,18 +60,24 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.thefinaltransfer.R
+import com.example.thefinaltransfer.presentation.auth.AuthViewModel
 import com.example.thefinaltransfer.presentation.navigation.Routes
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @Composable
-fun EmailLoginScreen(navHostController: NavHostController) {
+fun EmailLoginScreen(
+    navHostController: NavHostController,
+    authViewModel: AuthViewModel
+) {
     // --- State Encapsulation ---
     var emailAddress by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
     var passwordVisible by rememberSaveable { mutableStateOf(false) }
     var isAuthenticating by rememberSaveable { mutableStateOf(false) }
     var showError by rememberSaveable { mutableStateOf(false) }
+
+    val authState by authViewModel.uiState.collectAsState()
 
     // --- Focus & Scroll Management ---
     val emailFocusRequester = remember { FocusRequester() }
@@ -80,13 +86,27 @@ fun EmailLoginScreen(navHostController: NavHostController) {
     val scrollState = rememberScrollState()
     val coroutineScope = rememberCoroutineScope()
 
-    // Auto-scroll to bottom when error appears so the user can see it
-    LaunchedEffect(showError) {
-        if (showError) {
-            delay(100) // Slight delay to allow UI to render the box first
-            scrollState.animateScrollTo(scrollState.maxValue)
+// Observe navigation triggers from ViewModel
+    LaunchedEffect(authState.navigateToHome) {
+        if (authState.navigateToHome) {
+            authViewModel.clearNavigationFlags()
+            navHostController.navigate(Routes.HomeScreen) {
+                popUpTo(0) { inclusive = true }
+            }
         }
     }
+
+// Observe errors from ViewModel
+    LaunchedEffect(authState.errorMessage) {
+        authState.errorMessage?.let {
+            showError = true
+        }
+    }
+
+    LaunchedEffect(authState.isLoading) {
+        isAuthenticating = authState.isLoading
+    }
+
 
     val bgBrush = Brush.verticalGradient(
         colors = listOf(
@@ -202,14 +222,21 @@ fun EmailLoginScreen(navHostController: NavHostController) {
                     emailAddress = it
                     showError = false
                 },
-                placeholder = { Text("contact@thefinaltransfer.com", color = Color.Gray.copy(alpha = 0.5f)) },
+                placeholder = {
+                    Text(
+                        "contact@thefinaltransfer.com",
+                        color = Color.Gray.copy(alpha = 0.5f)
+                    )
+                },
                 leadingIcon = {
                     Icon(
                         imageVector = Icons.Outlined.Email,
                         contentDescription = "Email",
                         // Retain color if focused OR filled
-                        tint = if (isEmailFocused || emailAddress.isNotEmpty()) colorResource(id = R.color.brand_orange) else Color.Gray.copy(alpha = 0.6f),
-                    modifier = Modifier.size(24.dp)
+                        tint = if (isEmailFocused || emailAddress.isNotEmpty()) colorResource(id = R.color.brand_orange) else Color.Gray.copy(
+                            alpha = 0.6f
+                        ),
+                        modifier = Modifier.size(24.dp)
                     )
                 },
                 modifier = Modifier
@@ -226,7 +253,7 @@ fun EmailLoginScreen(navHostController: NavHostController) {
                     onNext = { passwordFocusRequester.requestFocus() }
                 ),
                 singleLine = true,
-                enabled =!isAuthenticating
+                enabled = !isAuthenticating
             )
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -241,7 +268,12 @@ fun EmailLoginScreen(navHostController: NavHostController) {
                     password = it
                     showError = false
                 },
-                placeholder = { Text("Enter your password", color = Color.Gray.copy(alpha = 0.5f)) },
+                placeholder = {
+                    Text(
+                        "Enter your password",
+                        color = Color.Gray.copy(alpha = 0.5f)
+                    )
+                },
                 leadingIcon = {
                     Icon(
                         imageVector = Icons.Outlined.Lock,
@@ -251,11 +283,13 @@ fun EmailLoginScreen(navHostController: NavHostController) {
                     )
                 },
                 trailingIcon = {
-                    val icon = if (passwordVisible) Icons.Outlined.Visibility else Icons.Outlined.VisibilityOff
+                    val icon =
+                        if (passwordVisible) Icons.Outlined.Visibility else Icons.Outlined.VisibilityOff
                     IconButton(
-                        onClick = { passwordVisible =!passwordVisible },
+                        onClick = { passwordVisible = !passwordVisible },
                         modifier = Modifier.semantics {
-                            contentDescription = if (passwordVisible) "Hide password" else "Show password"
+                            contentDescription =
+                                if (passwordVisible) "Hide password" else "Show password"
                         }
                     ) {
                         Icon(
@@ -280,12 +314,12 @@ fun EmailLoginScreen(navHostController: NavHostController) {
                     onDone = {
                         focusManager.clearFocus()
                         if (emailAddress.isBlank() || password.isBlank()) {
-                        showError = true
-                    }
+                            showError = true
+                        }
                     }
                 ),
                 singleLine = true,
-                enabled =!isAuthenticating
+                enabled = !isAuthenticating
             )
 
             // Forgot Password
@@ -300,7 +334,7 @@ fun EmailLoginScreen(navHostController: NavHostController) {
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier
                         .padding(top = 12.dp)
-                        .clickable(enabled =!isAuthenticating) { /* Recovery */ }
+                        .clickable(enabled = !isAuthenticating) { /* Recovery */ }
                 )
             }
 
@@ -337,7 +371,7 @@ fun EmailLoginScreen(navHostController: NavHostController) {
                 }
             }
 
-            if(showError) Spacer(modifier = Modifier.height(24.dp))
+            if (showError) Spacer(modifier = Modifier.height(24.dp))
 
             // Spacer to push button to the bottom area smoothly
             Spacer(modifier = Modifier.weight(1f, fill = false))
@@ -354,18 +388,12 @@ fun EmailLoginScreen(navHostController: NavHostController) {
                 onClick = {
                     focusManager.clearFocus()
                     if (emailAddress.isBlank() || password.isBlank()) {
-                    showError = true
-                } else {
-                    isAuthenticating = true
-                    showError = false
-
-                    coroutineScope.launch {
-                        delay(2000) // Simulate Auth
-                        isAuthenticating = false
-
-                        navHostController.navigate(Routes.LoginOTPScreen)
+                        showError = true
+                    } else {
+                        isAuthenticating = true
+                        showError = false
+                        authViewModel.loginWithEmail(emailAddress, password)
                     }
-                }
                 },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -378,7 +406,7 @@ fun EmailLoginScreen(navHostController: NavHostController) {
                 shape = RoundedCornerShape(16.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
                 contentPadding = PaddingValues(),
-                enabled =!isAuthenticating
+                enabled = !isAuthenticating
             ) {
                 Box(
                     modifier = Modifier

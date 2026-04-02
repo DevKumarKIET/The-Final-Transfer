@@ -49,6 +49,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.thefinaltransfer.R
+import com.example.thefinaltransfer.presentation.auth.AuthViewModel
 import com.example.thefinaltransfer.presentation.navigation.Routes
 
 // --- Defined Colors for consistency without XML dependency ---
@@ -61,8 +62,11 @@ private val GradientEnd = Color(0xFFFFB703)
 private val SuccessGreen = Color(0xFF4CAF50)
 
 @Composable
-fun CreatePasswordScreen(navHostController: NavHostController?) {
-    // --- State Management ---
+fun CreatePasswordScreen(
+    navHostController: NavHostController,
+    authViewModel: AuthViewModel
+) {
+    // State Management
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
 
@@ -70,7 +74,19 @@ fun CreatePasswordScreen(navHostController: NavHostController?) {
     var isPasswordVisible by remember { mutableStateOf(false) }
     var isConfirmPasswordVisible by remember { mutableStateOf(false) }
 
-    // --- Dynamic Security Validation Rules ---
+    val authState by authViewModel.uiState.collectAsState()
+
+    LaunchedEffect(authState.navigateToBiometric) {
+        if (authState.navigateToBiometric) {
+            authViewModel.clearNavigationFlags()
+            navHostController.navigate(Routes.BiometricAuthenticationScreen) {
+                popUpTo(Routes.LoginScreen) { inclusive = true }
+            }
+        }
+    }
+
+
+    // Dynamic Security Validation Rules
     val hasMinLength = password.length >= 8
     val hasUppercase = password.any { it.isUpperCase() }
     val hasNumber = password.any { it.isDigit() }
@@ -233,8 +249,9 @@ fun CreatePasswordScreen(navHostController: NavHostController?) {
                 text = "Continue",
                 isEnabled = isFormValid,
                 onClick = {
-                    focusManager.clearFocus()
-                    navHostController?.navigate(Routes.BiometricAuthenticationScreen)
+                    if (password == confirmPassword && password.length >= 8) {
+                        authViewModel.completeSignUp(password)
+                    }
                 }
             )
         }

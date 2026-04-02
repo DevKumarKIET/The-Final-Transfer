@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "107026153415",
+    "firebase_url": "https://the-final-transfer-001-default-rtdb.firebaseio.com",
+    "project_id": "the-final-transfer-001",
+    "storage_bucket": "the-final-transfer-001.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:107026153415:android:bbb8ab5f0998e7fa6aa3e2",
+        "android_client_info": {
+          "package_name": "com.example.thefinaltransfer"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBtMAjllg_f1DofOxgXUzQBP9MIv8apabA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

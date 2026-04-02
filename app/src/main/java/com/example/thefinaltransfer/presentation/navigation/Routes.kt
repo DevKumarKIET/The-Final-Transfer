@@ -16,11 +16,18 @@ sealed class Routes {
     @Serializable
     data object MobileLoginScreen : Routes()
     @Serializable
-    data object LoginOTPScreen : Routes()
+    data class LoginOTPScreen(
+        val identifier: String = "",
+        val method: String = "phone"
+    ) : Routes()
     @Serializable
     data object SignUpScreen : Routes()
     @Serializable
-    data object SignUpOTPScreen : Routes()
+    data class SignUpOTPScreen(
+        val email: String = "",
+        val mobile: String = "",
+        val fullName: String = ""
+    ) : Routes()
 
     @Serializable
     data object CreatePasswordScreen : Routes()
@@ -44,8 +51,6 @@ sealed class Routes {
 
     @Serializable
     data object EditCheckInHome : Routes()
-
-
 
 
 }

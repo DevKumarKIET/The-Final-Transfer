@@ -52,6 +52,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.thefinaltransfer.R
+import com.example.thefinaltransfer.presentation.auth.AuthViewModel
 import com.example.thefinaltransfer.presentation.navigation.Routes
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -77,13 +78,34 @@ private object OtpScreenTokens {
 }
 
 @Composable
-fun LoginOtpScreen(navHostController: NavHostController?) {
+fun LoginOtpScreen(
+    navHostController: NavHostController?,
+    authViewModel: AuthViewModel,
+    identifier: String = "",
+    method: String = "phone"
+) {
     var otpState by rememberSaveable(stateSaver = TextFieldValue.Saver) {
         mutableStateOf(TextFieldValue(text = "", selection = TextRange(0)))
     }
 
     var isVerifying by rememberSaveable { mutableStateOf(false) }
     var showError by rememberSaveable { mutableStateOf(false) }
+
+    val authState by authViewModel.uiState.collectAsState()
+
+    LaunchedEffect(authState.navigateToHome) {
+        if (authState.navigateToHome) {
+            authViewModel.clearNavigationFlags()
+            navHostController?.navigate(Routes.HomeScreen) {
+                popUpTo(0) { inclusive = true }
+            }
+        }
+    }
+
+    LaunchedEffect(authState.isLoading) {
+        isVerifying = authState.isLoading
+    }
+
 
     val focusManager = LocalFocusManager.current
     val scrollState = rememberScrollState()
@@ -136,10 +158,7 @@ fun LoginOtpScreen(navHostController: NavHostController?) {
                 otpState = otpState,
                 showError = showError,
                 onOtpChange = { newValue ->
-                    // Restrict input matrix length to prevent buffer overflow and visual breaking
                     if (newValue.text.length <= OtpScreenTokens.OTP_LENGTH && newValue.text.all { it.isDigit() }) {
-                        // Mathematically force the cursor strictly to the end of the text string
-                        // to prevent mid-string insertion bugs and maintain IME parity.
                         val safeValue = newValue.copy(selection = TextRange(newValue.text.length))
                         otpState = safeValue
                         showError = false
@@ -163,21 +182,14 @@ fun LoginOtpScreen(navHostController: NavHostController?) {
             Spacer(modifier = Modifier.weight(1f, fill = false))
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Problem 3 Fixed: Action component integrates dynamic shadow mitigation.
             ActionGradientButton(
                 isEnabled = isOtpComplete,
                 isLoading = isVerifying,
                 onClick = {
                     focusManager.clearFocus()
                     if (isOtpComplete) {
-                        isVerifying = true
-                        showError = false
-
-                        coroutineScope.launch {
-                            delay(2000) // Simulated backend network handshake
-                            isVerifying = false
-                            navHostController?.navigate(Routes.HomeScreen)
-                        }
+                        authViewModel.onOtpChanged(otpState.text)
+                        authViewModel.verifyLoginOtp()
                     } else {
                         showError = true
                     }
@@ -187,9 +199,6 @@ fun LoginOtpScreen(navHostController: NavHostController?) {
     }
 }
 
-/**
- * Encapsulated Top Navigation Component
- */
 @Composable
 private fun OtpTopAppBar(onBackClick: () -> Unit) {
     Row(
@@ -216,10 +225,6 @@ private fun OtpTopAppBar(onBackClick: () -> Unit) {
     }
 }
 
-/**
- * Encapsulated Security Icon Design Element
- * Contains complex shadow casting geometries isolated from the main flow.
- */
 @Composable
 private fun SecurityHeaderIcon() {
     Box(
@@ -250,9 +255,6 @@ private fun SecurityHeaderIcon() {
     }
 }
 
-/**
- * Encapsulated Typography Matrix
- */
 @Composable
 private fun HeaderTypography() {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -278,10 +280,6 @@ private fun HeaderTypography() {
     }
 }
 
-/**
- * Responsive OTP Input Field Grid
- * Solves absolute geometry issues via dynamic weight and aspect ratio calculations.
- */
 @Composable
 private fun OtpInputGrid(
     otpState: TextFieldValue,
@@ -294,8 +292,6 @@ private fun OtpInputGrid(
         value = otpState,
         onValueChange = onOtpChange,
         keyboardOptions = KeyboardOptions(
-            // Explicitly requesting standard Number type resolves deeply embedded backspace bugs
-            // present on older OEM software keyboards when using Password flags.
             keyboardType = KeyboardType.Number,
             imeAction = ImeAction.Done
         ),
@@ -326,8 +322,6 @@ private fun OtpInputGrid(
                         label = "otp_border_color_anim"
                     )
 
-                    // Adaptive Constraints: Weight determines variable width,
-                    // aspectRatio forces the height to match identically for perfect squares.
                     Box(
                         modifier = Modifier
                             .weight(1f)
@@ -349,9 +343,6 @@ private fun OtpInputGrid(
     )
 }
 
-/**
- * Interactive Resend Link Component
- */
 @Composable
 private fun ResendActionLink(enabled: Boolean, onResendClick: () -> Unit) {
     Text(
@@ -366,9 +357,6 @@ private fun ResendActionLink(enabled: Boolean, onResendClick: () -> Unit) {
     )
 }
 
-/**
- * Animated Error Banner Topology
- */
 @Composable
 private fun ErrorManifestation(showError: Boolean) {
     AnimatedVisibility(
@@ -402,11 +390,7 @@ private fun ErrorManifestation(showError: Boolean) {
     }
 }
 
-/**
- * Primary Call To Action Component
- * Contains the logic to strip hardware shadow geometries when the button is inactive,
- * preventing dark artifacts from bleeding through the transparent bounding boxes.
- */
+
 @Composable
 private fun ActionGradientButton(
     isEnabled: Boolean,
@@ -472,10 +456,4 @@ private fun ActionGradientButton(
             }
         }
     }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun PreviewLoginOtpScreen() {
-    LoginOtpScreen(navHostController = null)
 }

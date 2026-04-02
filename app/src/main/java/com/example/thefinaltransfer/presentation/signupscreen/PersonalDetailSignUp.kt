@@ -50,33 +50,28 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.thefinaltransfer.R
+import com.example.thefinaltransfer.presentation.auth.AuthViewModel
 import com.example.thefinaltransfer.presentation.navigation.Routes
 
 @Composable
-fun RegisterPersonalDetailsScreen(navHostController: NavHostController) {
-    // --- State Management Architecture ---
-    // Utilizing remember blocks to hoist text state across recompositions
+fun RegisterPersonalDetailsScreen(
+    navHostController: NavHostController,
+    authViewModel: AuthViewModel
+) {
     var fullName by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var mobile by remember { mutableStateOf("") }
 
-    // Core Focus Manager retrieved from the CompositionLocal provider
-    // Critical for orchestrating sequential traversal and keyboard dismissal
     val focusManager = LocalFocusManager.current
 
-    // --- Dynamic Validation Heuristics ---
-    // Continuously evaluating input to determine the CTA button state.
-    // Name requires a minimum length to be considered valid natively.
     val isNameValid = fullName.trim().length >= 3
-    // Email utilizes the Android OS standard regex pattern matcher.
     val isEmailValid = Patterns.EMAIL_ADDRESS.matcher(email).matches()
-    // Mobile enforces a strict 10-digit numeric requirement.
     val isMobileValid = mobile.length == 10 && mobile.all { it.isDigit() }
 
     // The master validation flag governing the Continue button.
     val isFormValid = isNameValid && isEmailValid && isMobileValid
 
-    // --- UI Asset Generation ---
+    //UI Asset Generation
     val bgBrush = Brush.verticalGradient(
         colors = listOf(
             colorResource(id = R.color.pastel_bg_top),
@@ -85,14 +80,10 @@ fun RegisterPersonalDetailsScreen(navHostController: NavHostController) {
         )
     )
 
-    // The root layout container establishes the global touch interceptor.
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(bgBrush)
-            // Gesture interception layer: Tapping anywhere outside a specific
-            // active UI component will trigger this block, clearing all focus
-            // and commanding the OS to retract the software keyboard.
             .pointerInput(Unit) {
                 detectTapGestures(onTap = {
                     focusManager.clearFocus()
@@ -107,7 +98,7 @@ fun RegisterPersonalDetailsScreen(navHostController: NavHostController) {
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // --- 1. Top Navigation Bar ---
+            //Top Navigation Bar
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -135,7 +126,7 @@ fun RegisterPersonalDetailsScreen(navHostController: NavHostController) {
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // --- 2. Branding and Header Section ---
+            // Branding and Header Section
             Box(
                 modifier = Modifier
                     .size(80.dp)
@@ -188,8 +179,7 @@ fun RegisterPersonalDetailsScreen(navHostController: NavHostController) {
 
             Spacer(modifier = Modifier.height(28.dp))
 
-            // --- 3. Sequential Form Fields ---
-            // Field 1: Full Name. Implements ImeAction.Next to push focus downwards.
+            // Sequential Form Fields
             CustomInputField(
                 label = "Full Name",
                 value = fullName,
@@ -205,8 +195,6 @@ fun RegisterPersonalDetailsScreen(navHostController: NavHostController) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Field 2: Email Address. Integrates custom drawable request.
-            // Notice the use of iconDrawable instead of iconVector.
             CustomInputField(
                 label = "Email Address",
                 value = email,
@@ -221,7 +209,6 @@ fun RegisterPersonalDetailsScreen(navHostController: NavHostController) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Field 3: Mobile Number. The terminal field in the sequence.
             CustomInputField(
                 label = "Mobile Number",
                 value = mobile,
@@ -238,14 +225,22 @@ fun RegisterPersonalDetailsScreen(navHostController: NavHostController) {
             Spacer(modifier = Modifier.weight(1f))
             Spacer(modifier = Modifier.height(40.dp))
 
-            // --- 4. Dynamic Call-To-Action Button ---
+            //4. Dynamic Call-To-Action Button
             ValidationGradientButton(
                 text = "Continue",
                 isEnabled = isFormValid,
                 onClick = {
-                    // Absolute guarantee that keyboard collapses prior to route change
                     focusManager.clearFocus()
-                    navHostController.navigate(Routes.SignUpOTPScreen)
+                    authViewModel.onFullNameChanged(fullName)
+                    authViewModel.onEmailChanged(email)
+                    authViewModel.onMobileChanged(mobile)
+                    navHostController.navigate(
+                        Routes.SignUpOTPScreen(
+                            email = email,
+                            mobile = mobile,
+                            fullName = fullName
+                        )
+                    )
                 }
             )
             Spacer(modifier = Modifier.height(16.dp))
@@ -253,8 +248,7 @@ fun RegisterPersonalDetailsScreen(navHostController: NavHostController) {
     }
 }
 
-// --- Architecturally Enhanced Reusable Components ---
-
+//Architecturally Enhanced Reusable Components
 @Composable
 fun CustomInputField(
     label: String,
@@ -319,8 +313,6 @@ fun CustomInputField(
                 }
             },
             trailingIcon = {
-                // Renders a positive reinforcement checkmark when data is valid
-                // Requires the field to have lost focus to prevent premature validation
                 if (isValid && value.isNotEmpty() &&!isFocused) {
                     Icon(
                         imageVector = Icons.Outlined.CheckCircle,

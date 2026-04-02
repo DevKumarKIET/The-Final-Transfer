@@ -1,5 +1,6 @@
 package com.example.thefinaltransfer.presentation.signupotpscreen
 
+import android.app.Activity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -23,6 +24,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
@@ -34,10 +36,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.thefinaltransfer.R
+import com.example.thefinaltransfer.presentation.auth.AuthViewModel
 import com.example.thefinaltransfer.presentation.navigation.Routes
 
 @Composable
-fun RegisterOtpScreen(navHostController: NavHostController) {
+fun RegisterOtpScreen(
+    navHostController: NavHostController,
+    authViewModel: AuthViewModel
+) {
     // --- State Management ---
     var otpValue by remember { mutableStateOf("") }
     var selectedMethod by remember { mutableStateOf(VerificationMethod.MOBILE) }
@@ -51,6 +57,19 @@ fun RegisterOtpScreen(navHostController: NavHostController) {
     // It starts FALSE (Not filled -> Faded Button)
     // Becomes TRUE (Filled -> Bright Button)
     val isVerifyActive = otpValue.length == 6
+
+    val authState by authViewModel.uiState.collectAsState()
+    val context = LocalContext.current
+    val activity = context as Activity
+
+// Observe navigation trigger
+    LaunchedEffect(authState.navigateToCreatePassword) {
+        if (authState.navigateToCreatePassword) {
+            authViewModel.clearNavigationFlags()
+            navHostController.navigate(Routes.CreatePasswordScreen)
+        }
+    }
+
 
     // Background Gradient
     val bgBrush = Brush.verticalGradient(
@@ -173,18 +192,25 @@ fun RegisterOtpScreen(navHostController: NavHostController) {
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // --- 4. NEW: Send OTP Button ---
-            // Visual Logic: Bright if NOT sent yet. Faded if SENT.
-            // Click Logic: Sets isOtpSent to true.
+            //Send OTP Button
             StateButton(
-                text = if (isOtpSent) "OTP Sent" else "Send OTP",
-                isBright =!isOtpSent,
-                onClick = { isOtpSent = true }
+                text = if (authState.isOtpSent) "OTP Sent..." else if (authState.isLoading) "Sending..." else "Send OTP",
+                isBright = !authState.isOtpSent && !authState.isLoading,
+                onClick = {
+                    // Sync the verification method to ViewModel
+                    authViewModel.onVerificationMethodChanged(
+                        if (selectedMethod == VerificationMethod.MOBILE)
+                            com.example.thefinaltransfer.presentation.auth.VerificationMethod.MOBILE
+                        else
+                            com.example.thefinaltransfer.presentation.auth.VerificationMethod.EMAIL
+                    )
+                    authViewModel.sendSignUpOtp(activity)
+                }
             )
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // --- 5. OTP Input ---
+            //OTP Input
             Text(
                 text = "Enter 6-digit code",
                 fontSize = 14.sp,
@@ -216,14 +242,15 @@ fun RegisterOtpScreen(navHostController: NavHostController) {
             Spacer(modifier = Modifier.weight(1f))
             Spacer(modifier = Modifier.height(20.dp))
 
-            // --- 6. Verify & Continue Button ---
-            // Visual Logic: Faded if empty. Bright if Filled.
+            // Verify & Continue Button
             StateButton(
-                text = "Verify & Continue",
-                isBright = isVerifyActive,
-                onClick = { navHostController.navigate(Routes.CreatePasswordScreen) }
+                text = if (authState.isLoading) "Verifying..." else "Verify & Continue",
+                isBright = otpValue.length == 6 && !authState.isLoading,
+                onClick = {
+                    authViewModel.onOtpChanged(otpValue)
+                    authViewModel.verifySignUpOtp()
+                }
             )
-
             Spacer(modifier = Modifier.height(20.dp))
         }
     }
