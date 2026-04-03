@@ -34,7 +34,7 @@ import com.example.thefinaltransfer.R
 import com.example.thefinaltransfer.data.model.TrustedUserModel
 
 @Composable
-fun TrustedUsersScreen(
+fun TrustedUserScreen(
     navHostController: NavHostController,
     viewModel: TrustedUserViewModel
 ) {
@@ -54,6 +54,9 @@ fun TrustedUsersScreen(
     val gradientStart = colorResource(id = R.color.gradient_start)
     val gradientEnd = colorResource(id = R.color.gradient_end)
     val backgroundPastel = Color(0xFFFFF9F0) // Matching mockup bg
+
+    val snackbarHostState = remember { SnackbarHostState() }
+
 
     Box(modifier = Modifier.fillMaxSize().background(backgroundPastel)) {
         Column(modifier = Modifier.fillMaxSize()) {
@@ -142,17 +145,17 @@ fun TrustedUsersScreen(
                             onEmailChange = { email = it },
                             mobile = mobile,
                             onMobileChange = { mobile = it },
-                            onClose = { showAddForm = false },
+                            onClose = {
+                                showAddForm = false
+                                viewModel.clearMessages()
+                            },
+                            isLoading = uiState.isLoading,
                             onSave = {
                                 if (editingUserId != null) {
                                     viewModel.updateExistingUser(editingUserId!!, fullName, email, mobile)
                                 } else {
                                     viewModel.addTrustedUser(fullName, email, mobile)
                                 }
-                                showAddForm = false
-                                fullName = ""
-                                email = ""
-                                mobile = ""
                             }
                         )
                     }
@@ -211,6 +214,28 @@ fun TrustedUsersScreen(
                     }
                 }
             )
+        }
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 80.dp)
+        )
+    }
+
+    // Effect for showing messages and coordinating successful form closures
+    LaunchedEffect(uiState.errorMessage, uiState.successMessage) {
+        uiState.successMessage?.let {
+            snackbarHostState.showSnackbar(it)
+            viewModel.clearMessages()
+            // Clear inputs when successfully saved and hide form
+            showAddForm = false
+            editingUserId = null
+            fullName = ""
+            email = ""
+            mobile = ""
+        }
+        uiState.errorMessage?.let {
+            snackbarHostState.showSnackbar(it)
+            viewModel.clearMessages()
         }
     }
 }
@@ -382,6 +407,7 @@ fun AddTrustedUserCard(
     mobile: String,
     onMobileChange: (String) -> Unit,
     onClose: () -> Unit,
+    isLoading: Boolean = false,
     onSave: () -> Unit
 ) {
     // Basic Input Validation
@@ -475,9 +501,13 @@ fun AddTrustedUserCard(
                     disabledContentColor = Color(0xFFAAAAAA)
                 ),
                 shape = RoundedCornerShape(12.dp),
-                enabled = isFormValid
+                enabled = isFormValid && !isLoading
             ) {
-                Text(buttonText, color = if (isFormValid) Color.White else Color.Gray, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                if (isLoading) {
+                    CircularProgressIndicator(color = Color.Gray, modifier = Modifier.size(24.dp))
+                } else {
+                    Text(buttonText, color = if (isFormValid) Color.White else Color.Gray, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                }
             }
         }
     }

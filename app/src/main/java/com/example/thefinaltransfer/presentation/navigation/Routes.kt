@@ -55,6 +55,15 @@ sealed class Routes {
     @Serializable
     data object TrustedUserScreen : Routes()
 
+    @Serializable
+    data object AllPacketsScreen : Routes()
+
+    @Serializable
+    data object TotalNomineeScreen : Routes()
+
+    @Serializable
+    data object CriticalDetailScreen : Routes()
+
 }
 
 

@@ -26,7 +26,10 @@ import com.example.thefinaltransfer.presentation.logins.emaillogin.EmailLoginScr
 import com.example.thefinaltransfer.presentation.logins.loginotpscreen.LoginOtpScreen
 import com.example.thefinaltransfer.presentation.navoptions.aboutscreen.AboutScreen
 import com.example.thefinaltransfer.presentation.navoptions.homescreen.HomeScreen
+import com.example.thefinaltransfer.presentation.navoptions.homescreen.functionhome.allpackets.AllPacketsScreen
+import com.example.thefinaltransfer.presentation.navoptions.homescreen.functionhome.criticaldoc.CriticalDetailScreen
 import com.example.thefinaltransfer.presentation.navoptions.homescreen.functionhome.editcheckin.EditCheckInHomeScreen
+import com.example.thefinaltransfer.presentation.navoptions.homescreen.functionhome.totalnominee.TotalNomineeScreen
 import com.example.thefinaltransfer.presentation.navoptions.profilescreen.ProfileScreen
 import com.example.thefinaltransfer.presentation.navoptions.uploadscreen.UploadPacketScreen
 import com.example.thefinaltransfer.presentation.navoptions.vaultscreen.VaultScreen
@@ -34,7 +37,7 @@ import com.example.thefinaltransfer.presentation.signupotpscreen.RegisterOtpScre
 import com.example.thefinaltransfer.presentation.signupscreen.RegisterPersonalDetailsScreen
 import com.example.thefinaltransfer.presentation.splashscreen.SplashScreen
 import com.example.thefinaltransfer.presentation.startingscreen.StartingScreen
-import com.example.thefinaltransfer.presentation.trusteduser.TrustedUsersScreen
+import com.example.thefinaltransfer.presentation.trusteduser.TrustedUserScreen
 
 // Routes where Bottom Nav should be VISIBLE
 private val bottomNavRoutes = listOf(
@@ -138,8 +141,18 @@ fun TFTNavigationSystem() {
             }
             composable<Routes.TrustedUserScreen> {
                 val trustedUsersViewModel: com.example.thefinaltransfer.presentation.trusteduser.TrustedUserViewModel = viewModel()
-                TrustedUsersScreen(navController, trustedUsersViewModel)
+                TrustedUserScreen(navController, trustedUsersViewModel)
             }
+            composable<Routes.AllPacketsScreen> {
+                AllPacketsScreen(navController)
+            }
+            composable<Routes.TotalNomineeScreen> {
+                TotalNomineeScreen(navController)
+            }
+            composable<Routes.CriticalDetailScreen> {
+                CriticalDetailScreen(navController)
+            }
+
 
             composable<Routes.HomeScreen>(
                 enterTransition = { fadeIn(tween(200)) },

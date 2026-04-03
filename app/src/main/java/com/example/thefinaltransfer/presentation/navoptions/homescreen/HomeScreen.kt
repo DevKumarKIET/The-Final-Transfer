@@ -93,7 +93,7 @@ fun HomeScreen(navHostController: NavHostController) {
                         iconTint = HomeColors.AlertRedText
                     )
                     Spacer(modifier = Modifier.height(16.dp))
-                    EmergencyPacketCard()
+                    EmergencyPacketCard(navHostController)
                 }
             }
 
@@ -108,7 +108,8 @@ fun HomeScreen(navHostController: NavHostController) {
                         count = "12",
                         icon = Icons.Outlined.Inventory2,
                         iconBg = HomeColors.IconBgOrange,
-                        iconTint = Color(0xFFFFFFFF)
+                        iconTint = Color(0xFFFFFFFF),
+                        onClick = { navHostController.navigate(Routes.AllPacketsScreen) }
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))
@@ -118,7 +119,8 @@ fun HomeScreen(navHostController: NavHostController) {
                         count = "3",
                         icon = Icons.Outlined.Group,
                         iconBg = HomeColors.IconBgLightOrange,
-                        iconTint = Color(0xFFFFFFFF)
+                        iconTint = Color(0xFFFFFFFF),
+                        onClick = { navHostController.navigate(Routes.TotalNomineeScreen) }
                     )
                     Spacer(modifier = Modifier.height(16.dp))
 
@@ -145,7 +147,8 @@ fun HomeScreen(navHostController: NavHostController) {
                                     HomeColors.ActionRedEnd
                                 )
                             ),
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.weight(1f),
+
                         )
 
                         QuickActionCard(
@@ -249,7 +252,7 @@ private fun SectionTitle(
 }
 
 @Composable
-private fun EmergencyPacketCard() {
+private fun EmergencyPacketCard(navHostController: NavHostController) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
@@ -260,7 +263,7 @@ private fun EmergencyPacketCard() {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable { /* Handle Emergency Packet Click */ }
+                .clickable { navHostController.navigate(Routes.CriticalDetailScreen) }
                 .padding(20.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -330,7 +333,8 @@ private fun OverviewCard(
     count: String,
     icon: ImageVector,
     iconBg: Color,
-    iconTint: Color
+    iconTint: Color,
+    onClick: () -> Unit = {}
 ) {
     Card(
         modifier = Modifier
@@ -342,7 +346,7 @@ private fun OverviewCard(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable { /* Handle click */ }
+                .clickable { onClick() }
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
