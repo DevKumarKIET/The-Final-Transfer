@@ -1,5 +1,6 @@
 package com.example.thefinaltransfer.presentation.logins.loginotpscreen
 
+import android.app.Activity
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.animateColorAsState
@@ -14,7 +15,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -37,8 +37,8 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
@@ -47,15 +47,12 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
-import com.example.thefinaltransfer.R
 import com.example.thefinaltransfer.presentation.auth.AuthViewModel
 import com.example.thefinaltransfer.presentation.navigation.Routes
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
 private object OtpScreenTokens {
     const val OTP_LENGTH = 6
@@ -109,7 +106,8 @@ fun LoginOtpScreen(
 
     val focusManager = LocalFocusManager.current
     val scrollState = rememberScrollState()
-    val coroutineScope = rememberCoroutineScope()
+    val context = LocalContext.current
+    val activity = context as? Activity
 
     val isOtpComplete = otpState.text.length == OtpScreenTokens.OTP_LENGTH
 
@@ -173,11 +171,48 @@ fun LoginOtpScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            ResendActionLink(enabled =!isVerifying, onResendClick = { /* Network logic */ })
+            ResendActionLink(enabled = !isVerifying, onResendClick = {
+                activity?.let {
+                    authViewModel.loginWithPhone(identifier, authState.password, it)
+                }
+            })
 
             Spacer(modifier = Modifier.height(24.dp))
 
             ErrorManifestation(showError = showError)
+
+            // Display authentication errors from ViewModel
+            AnimatedVisibility(
+                visible = authState.errorMessage != null,
+                enter = expandVertically() + fadeIn(animationSpec = tween(300)),
+                exit = shrinkVertically() + fadeOut(animationSpec = tween(300))
+            ) {
+                authState.errorMessage?.let { errorMsg ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(OtpScreenTokens.ERROR_BG)
+                            .border(1.dp, Color(0xFFFFCDCD), RoundedCornerShape(12.dp))
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Info,
+                            contentDescription = "Error Information",
+                            tint = OtpScreenTokens.ERROR_RED,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(
+                            text = errorMsg,
+                            fontSize = 14.sp,
+                            color = Color(0xFFB71C1C),
+                            lineHeight = 18.sp
+                        )
+                    }
+                }
+            }
 
             Spacer(modifier = Modifier.weight(1f, fill = false))
             Spacer(modifier = Modifier.height(24.dp))

@@ -33,8 +33,7 @@ class FirebaseAuthRepository {
     private var storedVerificationId: String? = null
     private var resendToken: PhoneAuthProvider.ForceResendingToken? = null
 
-    // --- Current User State ---
-
+    //Current User State
     val currentUserId: String?
         get() = auth.currentUser?.uid
 
@@ -42,14 +41,6 @@ class FirebaseAuthRepository {
         get() = auth.currentUser != null
 
     //PHONE OTP AUTHENTICATION
-
-    /**
-     * Sends a 6-digit OTP to the specified phone number via Firebase Phone Auth.
-     *
-     * @param phoneNumber Full international phone number (e.g., "+919876543210")
-     * @param activity    Required by Firebase for reCAPTCHA verification
-     * @return Flow emitting AuthResult states (Loading → Success/Error)
-     */
     fun sendPhoneOtp(phoneNumber: String, activity: Activity): Flow<AuthResult> = callbackFlow {
         trySend(AuthResult.Loading)
 
@@ -90,12 +81,6 @@ class FirebaseAuthRepository {
         awaitClose { /* Cleanup if needed */ }
     }
 
-    /**
-     * Verifies the user-entered OTP against the stored verification ID.
-     *
-     * @param otp The 6-digit OTP entered by the user
-     * @return AuthResult indicating success or failure
-     */
     suspend fun verifyPhoneOtp(otp: String): AuthResult {
         return try {
             val verificationId = storedVerificationId
@@ -109,18 +94,7 @@ class FirebaseAuthRepository {
         }
     }
 
-    // ========================================================================
-    // SECTION 2: EMAIL + PASSWORD AUTHENTICATION
-    // ========================================================================
-
-    /**
-     * Creates a new user account with email and password.
-     * Firebase automatically sends a verification email.
-     *
-     * @param email    User's email address
-     * @param password User's chosen password
-     * @return AuthResult indicating success or failure
-     */
+    //EMAIL + PASSWORD AUTHENTICATION
     suspend fun signUpWithEmail(email: String, password: String): AuthResult {
         return try {
             auth.createUserWithEmailAndPassword(email, password).await()
@@ -132,13 +106,6 @@ class FirebaseAuthRepository {
         }
     }
 
-    /**
-     * Signs in an existing user with email and password.
-     *
-     * @param email    User's registered email address
-     * @param password User's vault password
-     * @return AuthResult indicating success or failure
-     */
     suspend fun signInWithEmail(email: String, password: String): AuthResult {
         return try {
             auth.signInWithEmailAndPassword(email, password).await()
@@ -148,9 +115,6 @@ class FirebaseAuthRepository {
         }
     }
 
-    /**
-     * Sends a password reset email to the user.
-     */
     suspend fun sendPasswordResetEmail(email: String): AuthResult {
         return try {
             auth.sendPasswordResetEmail(email).await()
@@ -160,24 +124,12 @@ class FirebaseAuthRepository {
         }
     }
 
-    /**
-     * Signs out the current user from Firebase.
-     */
     fun signOut() {
         auth.signOut()
     }
 
-    // ========================================================================
-    // SECTION 3: REALTIME DATABASE — USER PROFILE CRUD
-    // ========================================================================
+    //REALTIME DATABASE — USER PROFILE CRUD
 
-    /**
-     * Saves a complete user profile to Firebase Realtime Database.
-     * Path: /users/{uid}/
-     *
-     * @param user The UserModel containing all user details
-     * @return AuthResult indicating success or failure
-     */
     suspend fun saveUserToDatabase(user: UserModel): AuthResult {
         return try {
             val uid = user.uid.ifEmpty { auth.currentUser?.uid ?: return AuthResult.Error("No authenticated user") }
@@ -188,12 +140,7 @@ class FirebaseAuthRepository {
         }
     }
 
-    /**
-     * Retrieves a user profile from Firebase Realtime Database.
-     *
-     * @param uid The Firebase UID of the user
-     * @return Flow emitting the UserModel or null
-     */
+
     fun getUserFromDatabase(uid: String): Flow<UserModel?> = callbackFlow {
         val listener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
@@ -213,12 +160,6 @@ class FirebaseAuthRepository {
         }
     }
 
-    /**
-     * Updates specific fields in a user's profile without overwriting the entire node.
-     *
-     * @param uid     The Firebase UID
-     * @param updates A map of field names to new values
-     */
     suspend fun updateUserFields(uid: String, updates: Map<String, Any>): AuthResult {
         return try {
             usersRef.child(uid).updateChildren(updates).await()
@@ -228,9 +169,6 @@ class FirebaseAuthRepository {
         }
     }
 
-    /**
-     * Checks if a user profile already exists in the database.
-     */
     suspend fun doesUserExist(uid: String): Boolean {
         return try {
             val snapshot = usersRef.child(uid).get().await()
@@ -240,14 +178,29 @@ class FirebaseAuthRepository {
         }
     }
 
-    // ========================================================================
-    // SECTION 4: UTILITY FUNCTIONS
-    // ========================================================================
+    suspend fun updateUserPassword(password: String): AuthResult {
+        return try {
+            auth.currentUser?.updatePassword(password)?.await()
+            AuthResult.Success("Password updated")
+        } catch (e: Exception) {
+            AuthResult.Error(e.message ?: "Failed to update password")
+        }
+    }
 
-    /**
-     * Hashes a password using SHA-256 for safe storage.
-     * NEVER store plaintext passwords, even in Firebase.
-     */
+    suspend fun checkEmailVerified(): AuthResult {
+        return try {
+            auth.currentUser?.reload()?.await()
+            if (auth.currentUser?.isEmailVerified == true) {
+                AuthResult.Success("Email is verified")
+            } else {
+                AuthResult.Error("Email not yet verified. Please check your inbox.")
+            }
+        } catch (e: Exception) {
+            AuthResult.Error(e.message ?: "Failed to verify email status")
+        }
+    }
+
+    // UTILITY FUNCTIONS
     fun hashPassword(password: String): String {
         val digest = MessageDigest.getInstance("SHA-256")
         val hashBytes = digest.digest(password.toByteArray())

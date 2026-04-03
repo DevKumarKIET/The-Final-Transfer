@@ -37,25 +37,21 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.thefinaltransfer.R
 import com.example.thefinaltransfer.presentation.auth.AuthViewModel
+import com.example.thefinaltransfer.presentation.auth.VerificationMethod
 import com.example.thefinaltransfer.presentation.navigation.Routes
 
 @Composable
 fun RegisterOtpScreen(
-    navHostController: NavHostController,
-    authViewModel: AuthViewModel
+    navHostController: NavHostController, authViewModel: AuthViewModel
 ) {
     // --- State Management ---
     var otpValue by remember { mutableStateOf("") }
     var selectedMethod by remember { mutableStateOf(VerificationMethod.MOBILE) }
 
     // State for the "Send OTP" button
-    // It starts FALSE (Not sent yet -> Bright Button)
-    // Becomes TRUE (Sent -> Faded Button)
     var isOtpSent by remember { mutableStateOf(false) }
 
     // Logic for "Verify & Continue" button
-    // It starts FALSE (Not filled -> Faded Button)
-    // Becomes TRUE (Filled -> Bright Button)
     val isVerifyActive = otpValue.length == 6
 
     val authState by authViewModel.uiState.collectAsState()
@@ -111,13 +107,12 @@ fun RegisterOtpScreen(
                     color = colorResource(id = R.color.gradient_start),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Medium,
-                    modifier = Modifier.clickable { navHostController.navigate(Routes.SignUpScreen) }
-                )
+                    modifier = Modifier.clickable { navHostController.navigate(Routes.SignUpScreen) })
             }
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // --- 2. Header ---
+            //Header
             Box(
                 modifier = Modifier
                     .size(80.dp)
@@ -137,8 +132,7 @@ fun RegisterOtpScreen(
             Spacer(modifier = Modifier.height(20.dp))
 
             Text(
-                text = "Verification",
-                style = TextStyle(
+                text = "Verification", style = TextStyle(
                     fontFamily = FontFamily.Serif,
                     fontSize = 28.sp,
                     fontWeight = FontWeight.Bold,
@@ -192,65 +186,117 @@ fun RegisterOtpScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            //Send OTP Button
-            StateButton(
-                text = if (authState.isOtpSent) "OTP Sent..." else if (authState.isLoading) "Sending..." else "Send OTP",
-                isBright = !authState.isOtpSent && !authState.isLoading,
-                onClick = {
-                    // Sync the verification method to ViewModel
-                    authViewModel.onVerificationMethodChanged(
-                        if (selectedMethod == VerificationMethod.MOBILE)
+            if (selectedMethod == VerificationMethod.MOBILE) {
+                //Send OTP Button
+                StateButton(
+                    text = if (authState.isOtpSent) "OTP Sent..." else if (authState.isLoading) "Sending..." else "Send OTP",
+                    isBright = !authState.isOtpSent && !authState.isLoading,
+                    onClick = {
+                        authViewModel.onVerificationMethodChanged(
                             com.example.thefinaltransfer.presentation.auth.VerificationMethod.MOBILE
-                        else
-                            com.example.thefinaltransfer.presentation.auth.VerificationMethod.EMAIL
+                        )
+                        authViewModel.sendSignUpOtp(activity)
+                        isOtpSent = true
+                    })
+                Spacer(modifier = Modifier.height(32.dp))
+
+                //OTP Input
+                Text(
+                    text = "Enter 6-digit code",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF333333),
+                    modifier = Modifier.align(Alignment.Start)
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+
+                OtpInputField(
+                    otpText = otpValue, onOtpChange = { if (it.length <= 6) otpValue = it })
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text(
+                    text = "Didn't receive code? Resend",
+                    fontSize = 14.sp,
+                    color = colorResource(id = R.color.brand_orange),
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.clickable {
+                        // Reset to allow sending again
+                        isOtpSent = false
+                        otpValue = ""
+                    })
+
+                Spacer(modifier = Modifier.weight(1f))
+                Spacer(modifier = Modifier.height(20.dp))
+
+                // Verify & Continue Button
+                StateButton(
+                    text = if (authState.isLoading) "Verifying..." else "Verify & Continue",
+                    isBright = otpValue.length == 6 && !authState.isLoading,
+                    onClick = {
+                        authViewModel.onOtpChanged(otpValue)
+                        authViewModel.verifySignUpOtp()
+                    })
+            } else {
+                // EMAIL VERIFICATION FLOW
+                StateButton(
+                    text = if (authState.isOtpSent) "Verification Link Sent ✓" else if (authState.isLoading) "Sending..." else "Send Verification Link",
+                    isBright = !authState.isOtpSent && !authState.isLoading,
+                    onClick = {
+                        authViewModel.onVerificationMethodChanged(VerificationMethod.EMAIL)
+                        authViewModel.sendSignUpOtp(activity)
+                        isOtpSent = true
+                    }
+                )
+
+                Spacer(modifier = Modifier.height(32.dp))
+
+                if (authState.isOtpSent) {
+                    Text(
+                        text = "A verification link has been sent to your email. Please check your inbox and click the link to verify your account.",
+                        fontSize = 14.sp,
+                        textAlign = TextAlign.Center,
+                        color = Color.Gray,
+                        modifier = Modifier.padding(horizontal = 16.dp)
                     )
-                    authViewModel.sendSignUpOtp(activity)
+
+                    if (authState.errorMessage != null) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = authState.errorMessage!!,
+                            color = Color.Red,
+                            fontSize = 12.sp,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.weight(1f))
+                    Spacer(modifier = Modifier.height(20.dp))
+
+                    // Verify & Continue Button
+                    StateButton(
+                        text = if (authState.isLoading) "Checking..." else "I Have Verified",
+                        isBright = true,
+                        onClick = {
+                            authViewModel.checkEmailVerificationStatus()
+                        }
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Text(
+                        text = "Resend Verification Link",
+                        fontSize = 14.sp,
+                        color = colorResource(id = R.color.brand_orange),
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.clickable {
+                            isOtpSent = false
+                        }
+                    )
+                } else {
+                    Spacer(modifier = Modifier.weight(1f))
                 }
-            )
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            //OTP Input
-            Text(
-                text = "Enter 6-digit code",
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF333333),
-                modifier = Modifier.align(Alignment.Start)
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-
-            OtpInputField(
-                otpText = otpValue,
-                onOtpChange = { if (it.length <= 6) otpValue = it }
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Text(
-                text = "Didn't receive code? Resend",
-                fontSize = 14.sp,
-                color = colorResource(id = R.color.brand_orange),
-                fontWeight = FontWeight.Medium,
-                modifier = Modifier.clickable {
-                    // Reset to allow sending again
-                    isOtpSent = false
-                    otpValue = ""
-                }
-            )
-
-            Spacer(modifier = Modifier.weight(1f))
-            Spacer(modifier = Modifier.height(20.dp))
-
-            // Verify & Continue Button
-            StateButton(
-                text = if (authState.isLoading) "Verifying..." else "Verify & Continue",
-                isBright = otpValue.length == 6 && !authState.isLoading,
-                onClick = {
-                    authViewModel.onOtpChanged(otpValue)
-                    authViewModel.verifySignUpOtp()
-                }
-            )
+            }
             Spacer(modifier = Modifier.height(20.dp))
         }
     }
@@ -263,8 +309,7 @@ enum class VerificationMethod { MOBILE, EMAIL }
 
 @Composable
 fun StateButton(
-    text: String,
-    isBright: Boolean, // True = Gradient, False = Faded
+    text: String, isBright: Boolean, // True = Gradient, False = Faded
     onClick: () -> Unit
 ) {
     val startColor = colorResource(id = R.color.gradient_start)
@@ -328,7 +373,8 @@ fun SelectionCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val borderColor = if (isSelected) colorResource(id = R.color.brand_orange) else Color.Transparent
+    val borderColor =
+        if (isSelected) colorResource(id = R.color.brand_orange) else Color.Transparent
     val bgColor = if (isSelected) Color(0xFFFFF4E3) else Color.White
     val contentColor = if (isSelected) colorResource(id = R.color.brand_orange) else Color.Gray
 
@@ -336,7 +382,7 @@ fun SelectionCard(
         onClick = onClick,
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = bgColor),
-        elevation = CardDefaults.cardElevation(defaultElevation = if(isSelected) 0.dp else 2.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = if (isSelected) 0.dp else 2.dp),
         modifier = modifier.border(1.dp, borderColor, RoundedCornerShape(12.dp))
     ) {
         Row(
@@ -345,9 +391,19 @@ fun SelectionCard(
             horizontalArrangement = Arrangement.Center
         ) {
             Spacer(modifier = Modifier.weight(1f))
-            Icon(imageVector = icon, contentDescription = null, tint = contentColor, modifier = Modifier.size(20.dp))
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = contentColor,
+                modifier = Modifier.size(20.dp)
+            )
             Spacer(modifier = Modifier.width(8.dp))
-            Text(text = text, fontWeight = FontWeight.SemiBold, color = contentColor, fontSize = 14.sp)
+            Text(
+                text = text,
+                fontWeight = FontWeight.SemiBold,
+                color = contentColor,
+                fontSize = 14.sp
+            )
             Spacer(modifier = Modifier.weight(1f))
         }
     }
@@ -355,15 +411,16 @@ fun SelectionCard(
 
 @Composable
 fun OtpInputField(
-    otpText: String,
-    onOtpChange: (String) -> Unit
+    otpText: String, onOtpChange: (String) -> Unit
 ) {
     BasicTextField(
         value = otpText,
         onValueChange = onOtpChange,
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
         decorationBox = {
-            Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
+            Row(
+                horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()
+            ) {
                 repeat(6) { index ->
                     val char = when {
                         index < otpText.length -> otpText[index].toString()
@@ -371,7 +428,10 @@ fun OtpInputField(
                     }
                     val isFocused = index == otpText.length
 
-                    val borderColor = if (isFocused || char.isNotEmpty()) colorResource(id = R.color.brand_orange) else Color(0xFFE0E0E0)
+                    val borderColor =
+                        if (isFocused || char.isNotEmpty()) colorResource(id = R.color.brand_orange) else Color(
+                            0xFFE0E0E0
+                        )
 
                     Box(
                         modifier = Modifier
@@ -392,6 +452,5 @@ fun OtpInputField(
                     }
                 }
             }
-        }
-    )
+        })
 }

@@ -110,6 +110,7 @@ class AuthViewModel : ViewModel() {
                             is AuthResult.Loading -> {
                                 _uiState.update { it.copy(isLoading = true, errorMessage = null) }
                             }
+
                             is AuthResult.Success -> {
                                 _uiState.update {
                                     it.copy(
@@ -119,6 +120,7 @@ class AuthViewModel : ViewModel() {
                                     )
                                 }
                             }
+
                             is AuthResult.Error -> {
                                 _uiState.update {
                                     it.copy(isLoading = false, errorMessage = result.message)
@@ -128,6 +130,7 @@ class AuthViewModel : ViewModel() {
                     }
                 }
             }
+
             VerificationMethod.EMAIL -> {
                 // For email OTP, we create the account first (email verification is auto-sent)
                 viewModelScope.launch {
@@ -139,16 +142,18 @@ class AuthViewModel : ViewModel() {
                             _uiState.update {
                                 it.copy(
                                     isLoading = false,
-                                    isOtpSent = true,
-                                    successMessage = "Verification email sent to ${state.email}"
+                                    isOtpSent = true, // We repurpose this flag to mean 'Link Sent'
+                                    successMessage = "Verification email sent to ${state.email}. Please verify and click Continue."
                                 )
                             }
                         }
+
                         is AuthResult.Error -> {
                             _uiState.update {
                                 it.copy(isLoading = false, errorMessage = result.message)
                             }
                         }
+
                         else -> {}
                     }
                 }
@@ -173,20 +178,46 @@ class AuthViewModel : ViewModel() {
                                 )
                             }
                         }
+
                         is AuthResult.Error -> {
                             _uiState.update {
                                 it.copy(isLoading = false, errorMessage = result.message)
                             }
                         }
+
                         else -> {}
                     }
                 }
+
                 VerificationMethod.EMAIL -> {
                     // For email, verification is link-based. We just proceed.
+                    checkEmailVerificationStatus()
+                }
+            }
+        }
+    }
+
+
+    fun checkEmailVerificationStatus() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+            when (val result = repository.checkEmailVerified()) {
+                is AuthResult.Success -> {
                     _uiState.update {
                         it.copy(isLoading = false, navigateToCreatePassword = true)
+                        it.copy(
+                            isLoading = false,
+                            navigateToCreatePassword = true,
+                            successMessage = "Email verified successfully"
+                        )
                     }
                 }
+                is AuthResult.Error -> {
+                    _uiState.update {
+                        it.copy(isLoading = false, errorMessage = result.message)
+                    }
+                }
+                else -> {}
             }
         }
     }
@@ -199,10 +230,24 @@ class AuthViewModel : ViewModel() {
 
             val uid = repository.currentUserId ?: run {
                 _uiState.update {
-                    it.copy(isLoading = false, errorMessage = "Authentication session expired. Please sign up again.")
+                    it.copy(
+                        isLoading = false,
+                        errorMessage = "Authentication session expired. Please sign up again."
+                    )
                 }
                 return@launch
             }
+            // Set the password on the Firebase Auth user before saving to database
+            when (val passwordUpdateResult = repository.updateUserPassword(password)) {
+                is AuthResult.Error -> {
+                    _uiState.update {
+                        it.copy(isLoading = false, errorMessage = passwordUpdateResult.message)
+                    }
+                    return@launch
+                }
+                else -> {} // Success, proceed to save DB payload
+            }
+
 
             val user = UserModel(
                 uid = uid,
@@ -223,17 +268,19 @@ class AuthViewModel : ViewModel() {
                         )
                     }
                 }
+
                 is AuthResult.Error -> {
                     _uiState.update {
                         it.copy(isLoading = false, errorMessage = result.message)
                     }
                 }
+
                 else -> {}
             }
         }
     }
 
-    // SECTION 3: LOGIN FLOW
+    // LOGIN FLOW
     fun loginWithEmail(email: String, password: String) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
@@ -242,17 +289,22 @@ class AuthViewModel : ViewModel() {
                 is AuthResult.Success -> {
                     // Update last login timestamp
                     repository.currentUserId?.let { uid ->
-                        repository.updateUserFields(uid, mapOf("lastLoginAt" to System.currentTimeMillis()))
+                        repository.updateUserFields(
+                            uid,
+                            mapOf("lastLoginAt" to System.currentTimeMillis())
+                        )
                     }
                     _uiState.update {
                         it.copy(isLoading = false, navigateToHome = true)
                     }
                 }
+
                 is AuthResult.Error -> {
                     _uiState.update {
                         it.copy(isLoading = false, errorMessage = result.message)
                     }
                 }
+
                 else -> {}
             }
         }
@@ -262,13 +314,15 @@ class AuthViewModel : ViewModel() {
         _uiState.update { it.copy(password = password) }
 
         viewModelScope.launch {
-            val fullPhoneNumber = if (phoneNumber.startsWith("+")) phoneNumber else "+91$phoneNumber"
+            val fullPhoneNumber =
+                if (phoneNumber.startsWith("+")) phoneNumber else "+91$phoneNumber"
 
             repository.sendPhoneOtp(fullPhoneNumber, activity).collect { result ->
                 when (result) {
                     is AuthResult.Loading -> {
                         _uiState.update { it.copy(isLoading = true, errorMessage = null) }
                     }
+
                     is AuthResult.Success -> {
                         _uiState.update {
                             it.copy(
@@ -278,6 +332,7 @@ class AuthViewModel : ViewModel() {
                             )
                         }
                     }
+
                     is AuthResult.Error -> {
                         _uiState.update {
                             it.copy(isLoading = false, errorMessage = result.message)
@@ -297,17 +352,22 @@ class AuthViewModel : ViewModel() {
                 is AuthResult.Success -> {
                     // Update last login timestamp
                     repository.currentUserId?.let { uid ->
-                        repository.updateUserFields(uid, mapOf("lastLoginAt" to System.currentTimeMillis()))
+                        repository.updateUserFields(
+                            uid,
+                            mapOf("lastLoginAt" to System.currentTimeMillis())
+                        )
                     }
                     _uiState.update {
                         it.copy(isLoading = false, navigateToHome = true)
                     }
                 }
+
                 is AuthResult.Error -> {
                     _uiState.update {
                         it.copy(isLoading = false, errorMessage = result.message)
                     }
                 }
+
                 else -> {}
             }
         }
@@ -324,11 +384,13 @@ class AuthViewModel : ViewModel() {
                         it.copy(isLoading = false, successMessage = result.message)
                     }
                 }
+
                 is AuthResult.Error -> {
                     _uiState.update {
                         it.copy(isLoading = false, errorMessage = result.message)
                     }
                 }
+
                 else -> {}
             }
         }

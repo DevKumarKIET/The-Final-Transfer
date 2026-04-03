@@ -58,9 +58,10 @@ fun RegisterPersonalDetailsScreen(
     navHostController: NavHostController,
     authViewModel: AuthViewModel
 ) {
-    var fullName by remember { mutableStateOf("") }
-    var email by remember { mutableStateOf("") }
-    var mobile by remember { mutableStateOf("") }
+    val authState by authViewModel.uiState.collectAsState()
+    var fullName by remember { mutableStateOf(authState.fullName) }
+    var email by remember { mutableStateOf(authState.email) }
+    var mobile by remember { mutableStateOf(authState.mobile) }
 
     val focusManager = LocalFocusManager.current
 

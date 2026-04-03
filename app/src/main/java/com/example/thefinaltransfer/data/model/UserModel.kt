@@ -6,7 +6,7 @@ data class UserModel(
     val fullName: String = "",
     val email: String = "",
     val mobile: String = "",
-    val passwordHash: String = "",  // We store a hashed version, never plaintext
+    val passwordHash: String = "",
     val createdAt: Long = System.currentTimeMillis(),
     val lastLoginAt: Long = System.currentTimeMillis(),
     val isVerified: Boolean = false
