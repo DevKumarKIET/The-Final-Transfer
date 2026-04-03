@@ -52,6 +52,8 @@ sealed class Routes {
     @Serializable
     data object EditCheckInHome : Routes()
 
+    @Serializable
+    data object TrustedUserScreen : Routes()
 
 }
 

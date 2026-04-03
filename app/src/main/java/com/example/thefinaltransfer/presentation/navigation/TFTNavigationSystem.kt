@@ -32,8 +32,9 @@ import com.example.thefinaltransfer.presentation.navoptions.uploadscreen.UploadP
 import com.example.thefinaltransfer.presentation.navoptions.vaultscreen.VaultScreen
 import com.example.thefinaltransfer.presentation.signupotpscreen.RegisterOtpScreen
 import com.example.thefinaltransfer.presentation.signupscreen.RegisterPersonalDetailsScreen
-import com.example.thefinaltransfer.presentation.splash.SplashScreen
+import com.example.thefinaltransfer.presentation.splashscreen.SplashScreen
 import com.example.thefinaltransfer.presentation.startingscreen.StartingScreen
+import com.example.thefinaltransfer.presentation.trusteduser.TrustedUsersScreen
 
 // Routes where Bottom Nav should be VISIBLE
 private val bottomNavRoutes = listOf(
@@ -135,7 +136,10 @@ fun TFTNavigationSystem() {
             composable<Routes.EditCheckInHome> {
                 EditCheckInHomeScreen(navController)
             }
-
+            composable<Routes.TrustedUserScreen> {
+                val trustedUsersViewModel: com.example.thefinaltransfer.presentation.trusteduser.TrustedUserViewModel = viewModel()
+                TrustedUsersScreen(navController, trustedUsersViewModel)
+            }
 
             composable<Routes.HomeScreen>(
                 enterTransition = { fadeIn(tween(200)) },

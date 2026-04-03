@@ -50,9 +50,13 @@ class AuthViewModel : ViewModel() {
     private val _uiState = MutableStateFlow(AuthUiState())
     val uiState: StateFlow<AuthUiState> = _uiState.asStateFlow()
 
+    init {
+        // Automatically fetch the user payload from Realtime Database if authenticated
+        loadCurrentUser()
+    }
+
 
     // INPUT HANDLERS
-
     fun onFullNameChanged(value: String) {
         _uiState.update { it.copy(fullName = value) }
     }

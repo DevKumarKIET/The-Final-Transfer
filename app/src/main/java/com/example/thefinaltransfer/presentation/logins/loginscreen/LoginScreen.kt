@@ -134,8 +134,7 @@ fun LoginMethodScreen(navHostController: NavHostController) {
 
         // --- 4. Footer ---
         val footerText = buildAnnotatedString {
-            append("Don't have an account? ")
-            // Assuming 'skip_text' or 'brand_orange' is your orange color
+            append("Don't have an account?")
             withStyle(style = SpanStyle(color = colorResource(id = R.color.brand_orange), fontWeight = FontWeight.Bold)) {
                 append("Create Account")
             }

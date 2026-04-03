@@ -1,4 +1,4 @@
-package com.example.thefinaltransfer.presentation.splash
+package com.example.thefinaltransfer.presentation.splashscreen
 
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
@@ -57,10 +57,18 @@ fun SplashScreen(
         isVisible = true
         delay(SPLASH_ENTER_AND_HOLD_MS)
 
-        isExiting = true // Trigger the 3D "Pop-forward" exit animation
+        isExiting = true
         delay(SPLASH_EXIT_DURATION_MS)
 
-        navHostController?.navigate(Routes.StartingScreen) {
+        // Check if user already exist or not.
+        val currentUser = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
+        val destination: Any = if (currentUser != null) {
+            Routes.HomeScreen // Bypass auth and goes to home page
+        } else {
+            Routes.StartingScreen // Fresh user, show onboarding/login
+        }
+
+        navHostController?.navigate(destination) {
             // Remove splash screen from backstack so users can't press 'back' to it
             popUpTo(navHostController.graph.startDestinationId) { inclusive = true }
         }

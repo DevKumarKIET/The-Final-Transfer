@@ -157,7 +157,8 @@ fun HomeScreen(navHostController: NavHostController) {
                                     HomeColors.ActionOrangeEnd
                                 )
                             ),
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.weight(1f),
+                            onClick = { navHostController.navigate(Routes.TrustedUserScreen) }
                         )
                     }
                 }
@@ -473,7 +474,8 @@ private fun QuickActionCard(
     title: String,
     icon: ImageVector,
     gradient: Brush,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit = {}
 ) {
     Card(
         modifier = modifier
@@ -485,7 +487,7 @@ private fun QuickActionCard(
             modifier = Modifier
                 .fillMaxSize()
                 .background(gradient)
-                .clickable { /* Action click */ }
+                .clickable { onClick() }
                 .padding(16.dp)
         ) {
             Column(
