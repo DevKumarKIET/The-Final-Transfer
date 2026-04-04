@@ -2,9 +2,6 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
-//    alias(libs.plugins.hilt.android)
-//    alias(libs.plugins.ksp)
-//    alias(libs.plugins.kotlin.serialization)
     kotlin("plugin.serialization") version "2.3.10"
     alias(libs.plugins.google.gms.google.services)
 }
@@ -21,7 +18,6 @@ android {
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
-
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -84,10 +80,9 @@ dependencies {
     //serialization(Kotlin) latest
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.10.0")
 
-//    implementation(libs.hilt.android)
-//    ksp(libs.hilt.compiler)
-//    implementation(libs.hilt.navigation.compose)
-//    implementation(libs.kotlinx.serialization.json)
-//    implementation(libs.androidx.material.icons.extended)
+
+    implementation(libs.supabase.storage)
+    implementation(libs.ktor.client.core)
+    implementation(libs.ktor.client.okhttp)
 
 }

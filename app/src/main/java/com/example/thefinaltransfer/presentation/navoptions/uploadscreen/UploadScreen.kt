@@ -49,10 +49,17 @@ import com.example.thefinaltransfer.presentation.navoptions.uploadscreen.compone
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun UploadPacketScreen(navHostController: NavHostController) {
+fun UploadPacketScreen(
+    navHostController: NavHostController,
+    uploadViewModel: UploadViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+) {
 
     val navBackStackEntry by navHostController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
+
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val uploadState by uploadViewModel.uploadState.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
 
     // Form States
 
@@ -62,6 +69,7 @@ fun UploadPacketScreen(navHostController: NavHostController) {
 
     var uploadedFiles by remember { mutableStateOf<List<Uri>>(emptyList()) }
     var selectedTrustedUsers by remember { mutableStateOf<List<String>>(emptyList()) }
+
 
     var nominees by remember { mutableStateOf(listOf(NomineeState())) }
 
@@ -85,9 +93,27 @@ fun UploadPacketScreen(navHostController: NavHostController) {
     )
 
     Scaffold(
-        containerColor = colorResource(id = R.color.navbackground)
-
+        containerColor = colorResource(id = R.color.navbackground),
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { innerPadding ->
+
+        LaunchedEffect(uploadState.successMessage, uploadState.errorMessage) {
+            uploadState.successMessage?.let {
+                snackbarHostState.showSnackbar(it)
+                uploadViewModel.clearMessages()
+                vaultCategory = ""
+                packetTitle = ""
+                notes = ""
+                uploadedFiles = emptyList()
+                selectedTrustedUsers = emptyList()
+                nominees = listOf(NomineeState())
+                showErrors = false
+            }
+            uploadState.errorMessage?.let {
+                snackbarHostState.showSnackbar(it)
+                uploadViewModel.clearMessages()
+            }
+        }
 
         LazyColumn(
             modifier = Modifier
@@ -128,7 +154,6 @@ fun UploadPacketScreen(navHostController: NavHostController) {
                     Spacer(Modifier.height(16.dp))
 
                     //Packet Title
-
                     RequiredLabel("Packet Title")
 
                     OutlinedTextField(
@@ -155,7 +180,6 @@ fun UploadPacketScreen(navHostController: NavHostController) {
                     Spacer(Modifier.height(16.dp))
 
                     // Note
-
                     Text(
                         text = "Notes / Description",
                         fontSize = 14.sp,
@@ -302,6 +326,32 @@ fun UploadPacketScreen(navHostController: NavHostController) {
                         showErrors
                     ) { valid ->
                         showErrors = !valid
+                        if (valid && !uploadState.isUploading) {
+                            uploadViewModel.uploadPacket(
+                                context = context,
+                                category = vaultCategory,
+                                packetTitle = packetTitle,
+                                fileUris = uploadedFiles
+                            )
+                        }
+                    }
+
+
+                    if (uploadState.isUploading) {
+                        Spacer(Modifier.height(16.dp))
+                        Card(
+                            modifier = Modifier.fillMaxWidth().padding(16.dp),
+                            colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF8E1))
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(16.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                                Text(uploadState.uploadProgress)
+                            }
+                        }
                     }
 
                     Spacer(Modifier.height(24.dp))
